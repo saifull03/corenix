@@ -153,6 +153,21 @@ html:not(.dark) .bg-slate-800\/40 {
   color: #1E293B !important;
 }
 
+/* Gradients in Light Mode (Transform dark banners into luxury soft light cards) */
+html:not(.dark) .from-navy-900,
+html:not(.dark) .via-slate-900,
+html:not(.dark) .to-navy-900 {
+  --tw-gradient-from: #FFFFFF !important;
+  --tw-gradient-to: #F8FAFC !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #F8FAFC, var(--tw-gradient-to) !important;
+}
+html:not(.dark) .from-navy-950 {
+  --tw-gradient-from: #F8FAFC !important;
+}
+html:not(.dark) .to-slate-900 {
+  --tw-gradient-to: #F1F5F9 !important;
+}
+
 /* Category Navbar in Light Mode */
 html:not(.dark) nav.bg-navy-900\/60 {
   background-color: #FFFFFF !important;

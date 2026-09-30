@@ -54,63 +54,63 @@ export default function StoresPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-navy-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 font-sans transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-12 w-full space-y-12">
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-brand-400">
             Physical Store Network
           </span>
-          <h1 className="text-3xl sm:text-4xl font-black text-white">
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
             CORENIX Showrooms & Service Hubs
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
             Experience premium hardware in person. Pick up online orders with zero shipping fee, consult our PC building engineers, or drop off hardware for official warranty diagnostics.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {locations.map((loc, i) => (
-            <div key={i} className="p-6 sm:p-8 rounded-3xl bg-navy-900 border border-slate-800 space-y-5 hover:border-brand-500/50 transition-colors">
+            <div key={i} className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-5 hover:border-sky-500/50 dark:hover:border-brand-500/50 transition-colors shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="px-3 py-1 rounded-full bg-cyan-950 text-cyan-300 border border-brand-500/30 text-xs font-bold">
+                <span className="px-3 py-1 rounded-full bg-sky-50 dark:bg-cyan-950 text-sky-700 dark:text-cyan-300 border border-sky-200 dark:border-brand-500/30 text-xs font-bold">
                   {loc.badge}
                 </span>
-                <span className="text-xs text-slate-400">{loc.type}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{loc.type}</span>
               </div>
 
               <div>
-                <h3 className="text-xl font-bold text-white">{loc.name}</h3>
-                <p className="text-xs text-slate-300 mt-2 flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-brand-400 mt-0.5 flex-shrink-0" />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">{loc.name}</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-sky-600 dark:text-brand-400 mt-0.5 flex-shrink-0" />
                   <span>{loc.address}</span>
                 </p>
               </div>
 
-              <div className="space-y-2 text-xs border-t border-slate-800 pt-4 text-slate-300">
+              <div className="space-y-2 text-xs border-t border-slate-100 dark:border-slate-800 pt-4 text-slate-600 dark:text-slate-300">
                 <div className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-brand-400" />
-                  <span>Hotline: <strong className="text-white">{loc.phone}</strong></span>
+                  <Phone className="w-3.5 h-3.5 text-sky-600 dark:text-brand-400" />
+                  <span>Hotline: <strong className="text-slate-900 dark:text-white">{loc.phone}</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-brand-400" />
+                  <Mail className="w-3.5 h-3.5 text-sky-600 dark:text-brand-400" />
                   <span>{loc.email}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-brand-400" />
+                  <Clock className="w-3.5 h-3.5 text-sky-600 dark:text-brand-400" />
                   <span>{loc.hours}</span>
                 </div>
               </div>
 
-              <div className="border-t border-slate-800 pt-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-brand-400 block mb-2">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-brand-400 block mb-2">
                   Branch Services:
                 </span>
-                <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
+                <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
                   {loc.services.map((srv, si) => (
                     <div key={si} className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 dark:bg-brand-400"></span>
                       <span>{srv}</span>
                     </div>
                   ))}

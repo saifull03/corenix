@@ -84,10 +84,10 @@ export default async function AdminDashboardPage() {
       {/* Title & Live Status */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-brand-400">
             Head Office Control Center
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
             Executive Analytics Dashboard
           </h1>
         </div>
@@ -95,14 +95,14 @@ export default async function AdminDashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/products/create"
-            className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-navy-950 font-bold text-xs flex items-center gap-1.5 shadow"
+            className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
           >
             <Package className="w-4 h-4" />
             <span>Add Product</span>
           </Link>
           <Link
             href="/admin/pos"
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700"
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors"
           >
             Open POS
           </Link>
@@ -112,52 +112,52 @@ export default async function AdminDashboardPage() {
       {/* KPI Cards Grid (Requirement 39) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Sales */}
-        <div className="p-5 rounded-2xl bg-navy-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Total Sales</span>
-            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="text-2xl font-black text-white">৳{stats.revenue.toLocaleString()}</div>
-          <div className="text-[11px] text-emerald-400 flex items-center gap-1">
+          <div className="text-2xl font-black text-slate-900 dark:text-white">৳{stats.revenue.toLocaleString()}</div>
+          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
             <TrendingUp className="w-3.5 h-3.5" /> +14.2% from last month
           </div>
         </div>
 
         {/* Gross Profit */}
-        <div className="p-5 rounded-2xl bg-navy-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Gross Profit (COGS)</span>
-            <TrendingUp className="w-4 h-4 text-brand-400" />
+            <TrendingUp className="w-4 h-4 text-sky-600 dark:text-brand-400" />
           </div>
-          <div className="text-2xl font-black text-brand-400">৳{stats.profit.toLocaleString()}</div>
-          <div className="text-[11px] text-slate-400">
-            Margin: <strong>{((stats.profit / (stats.revenue || 1)) * 100).toFixed(1)}%</strong>
+          <div className="text-2xl font-black text-sky-600 dark:text-brand-400">৳{stats.profit.toLocaleString()}</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            Margin: <strong className="text-slate-800 dark:text-slate-200">{((stats.profit / (stats.revenue || 1)) * 100).toFixed(1)}%</strong>
           </div>
         </div>
 
         {/* Total Inventory Value */}
-        <div className="p-5 rounded-2xl bg-navy-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Inventory Asset Value</span>
-            <Warehouse className="w-4 h-4 text-purple-400" />
+            <Warehouse className="w-4 h-4 text-purple-600 dark:text-purple-400" />
           </div>
-          <div className="text-2xl font-black text-purple-400">৳{stats.inventoryValue.toLocaleString()}</div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-2xl font-black text-purple-600 dark:text-purple-400">৳{stats.inventoryValue.toLocaleString()}</div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
             Across 4 Locations (WH, Shop 1, 2, RMA)
           </div>
         </div>
 
         {/* Pending RMA & Low Stock */}
-        <div className="p-5 rounded-2xl bg-navy-900 border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Service & Alerts</span>
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
+            <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400" />
           </div>
           <div className="flex items-baseline gap-3">
-            <span className="text-2xl font-black text-white">{stats.pendingRma} Active RMA</span>
-            <span className="text-xs text-amber-400 font-bold">{stats.lowStock} Low Stock</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-white">{stats.pendingRma} Active RMA</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">{stats.lowStock} Low Stock</span>
           </div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
             Total RMA Cost: ৳{stats.rmaCost.toLocaleString()}
           </div>
         </div>
@@ -166,13 +166,13 @@ export default async function AdminDashboardPage() {
       {/* Two Column: Multi-Branch Comparison & Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Multi-Branch Performance (Requirements 26, 37) */}
-        <div className="lg:col-span-6 p-6 rounded-2xl bg-navy-900 border border-slate-800 space-y-4">
+        <div className="lg:col-span-6 p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-brand-400" />
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-sky-600 dark:text-brand-400" />
               <span>Multi-Location Performance</span>
             </h2>
-            <Link href="/admin/branches" className="text-xs text-brand-400 hover:underline">
+            <Link href="/admin/branches" className="text-xs text-sky-600 dark:text-brand-400 hover:underline font-semibold">
               Manage Locations
             </Link>
           </div>
@@ -181,25 +181,25 @@ export default async function AdminDashboardPage() {
             {branchBreakdown.map((b) => (
               <div
                 key={b.code}
-                className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between"
+                className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white">{b.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{b.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 font-mono font-medium">
                       {b.code}
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 block mt-0.5">
-                    Stock Holding: <strong className="text-slate-200">{b.stock_units} Units</strong>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                    Stock Holding: <strong className="text-slate-800 dark:text-slate-200">{b.stock_units} Units</strong>
                   </span>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-xs font-black text-emerald-400 block">
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block">
                     ৳{Number(b.total_sales).toLocaleString()}
                   </span>
-                  <span className="text-[10px] text-slate-500 uppercase">Sales Volume</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Sales Volume</span>
                 </div>
               </div>
             ))}
@@ -207,64 +207,64 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Quick Operations Links */}
-        <div className="lg:col-span-6 p-6 rounded-2xl bg-navy-900 border border-slate-800 space-y-4">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-brand-400" />
+        <div className="lg:col-span-6 p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Layers className="w-5 h-5 text-sky-600 dark:text-brand-400" />
             <span>Fast Management Shortcuts</span>
           </h2>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <Link
               href="/admin/products/create"
-              className="p-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 block space-y-1 transition-colors group"
+              className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 block space-y-1 transition-colors group"
             >
-              <span className="font-bold text-white group-hover:text-brand-400 block">
+              <span className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
                 18-Step Product Creator
               </span>
-              <p className="text-slate-400 text-[11px]">Add GPU, CPU, specs & multi-branch stock.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">Add GPU, CPU, specs & multi-branch stock.</p>
             </Link>
 
             <Link
               href="/admin/inventory"
-              className="p-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 block space-y-1 transition-colors group"
+              className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 block space-y-1 transition-colors group"
             >
-              <span className="font-bold text-white group-hover:text-brand-400 block">
+              <span className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
                 Stock Transfers
               </span>
-              <p className="text-slate-400 text-[11px]">Warehouse to Shop 1 or Shop 2 transfers.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">Warehouse to Shop 1 or Shop 2 transfers.</p>
             </Link>
 
             <Link
               href="/admin/purchases"
-              className="p-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 block space-y-1 transition-colors group"
+              className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 block space-y-1 transition-colors group"
             >
-              <span className="font-bold text-white group-hover:text-brand-400 block">
+              <span className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
                 Procurement POs
               </span>
-              <p className="text-slate-400 text-[11px]">Order from Global Brand, Smart Tech, etc.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">Order from Global Brand, Smart Tech, etc.</p>
             </Link>
 
             <Link
               href="/admin/rma"
-              className="p-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 block space-y-1 transition-colors group"
+              className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 block space-y-1 transition-colors group"
             >
-              <span className="font-bold text-white group-hover:text-brand-400 block">
+              <span className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
                 RMA Cost Calculator
               </span>
-              <p className="text-slate-400 text-[11px]">Track labor, parts, and vendor costs.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">Track labor, parts, and vendor costs.</p>
             </Link>
           </div>
         </div>
       </div>
 
       {/* Recent Orders Table */}
-      <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 space-y-4">
+      <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-brand-400" />
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 text-sky-600 dark:text-brand-400" />
             <span>Recent Orders & Transactions</span>
           </h2>
-          <Link href="/admin/orders" className="text-xs text-brand-400 hover:underline">
+          <Link href="/admin/orders" className="text-xs text-sky-600 dark:text-brand-400 hover:underline font-semibold">
             View All Orders
           </Link>
         </div>
@@ -272,7 +272,7 @@ export default async function AdminDashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                 <th className="py-3 px-4">Order #</th>
                 <th className="py-3 px-4">Customer</th>
                 <th className="py-3 px-4">Location</th>
@@ -281,23 +281,23 @@ export default async function AdminDashboardPage() {
                 <th className="py-3 px-4 text-right">Amount</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {recentOrders.map((o) => (
-                <tr key={o.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3 px-4 font-mono font-bold text-brand-400">{o.order_number}</td>
-                  <td className="py-3 px-4 text-white font-medium">{o.customer_name || 'Walk-in / Online'}</td>
-                  <td className="py-3 px-4 text-slate-300">{o.branch_name}</td>
+                <tr key={o.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3 px-4 font-mono font-bold text-sky-600 dark:text-brand-400">{o.order_number}</td>
+                  <td className="py-3 px-4 text-slate-900 dark:text-white font-medium">{o.customer_name || 'Walk-in / Online'}</td>
+                  <td className="py-3 px-4 text-slate-600 dark:text-slate-300">{o.branch_name}</td>
                   <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 uppercase font-semibold text-[10px]">
+                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase font-semibold text-[10px]">
                       {o.payment_method}
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold text-[10px] uppercase">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 font-bold text-[10px] uppercase">
                       {o.order_status}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right font-black text-white">
+                  <td className="py-3 px-4 text-right font-black text-slate-900 dark:text-white">
                     ৳{Number(o.total_amount).toLocaleString()}
                   </td>
                 </tr>

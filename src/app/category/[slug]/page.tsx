@@ -101,25 +101,25 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-navy-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 font-sans transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-4 flex-wrap">
-          <Link href="/" className="hover:text-brand-400">Home</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <Link href="/products" className="hover:text-brand-400">Catalogue</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <span className="text-slate-200 font-semibold">{category.name}</span>
+        <nav className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4 flex-wrap">
+          <Link href="/" className="hover:text-sky-600 dark:hover:text-brand-400 transition-colors">Home</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600" />
+          <Link href="/products" className="hover:text-sky-600 dark:hover:text-brand-400 transition-colors">Catalogue</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600" />
+          <span className="text-slate-900 dark:text-slate-200 font-semibold">{category.name}</span>
         </nav>
 
         {/* Category Header with SEO H1 and Intro */}
-        <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-navy-900 to-slate-900 border border-slate-800">
-          <h1 className="text-2xl sm:text-3xl font-black text-white">
+        <div className="mb-8 p-6 sm:p-8 rounded-3xl bg-white dark:bg-gradient-to-r dark:from-navy-900 dark:to-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
             {category.h1 || `${category.name} Price in Bangladesh`}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-3xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 max-w-3xl leading-relaxed">
             {category.short_desc || `Browse all authentic ${category.name} products with official manufacturer warranties, verified stock, and branch pickup availability.`}
           </p>
         </div>
@@ -128,13 +128,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Filters Sidebar */}
           <aside className="lg:col-span-3 space-y-6">
-            <div className="p-5 rounded-2xl bg-navy-900 border border-slate-800 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-brand-400" /> Filter Hardware
+            <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-5 shadow-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-sky-600 dark:text-brand-400" /> Filter Hardware
                 </span>
                 {brandFilter && (
-                  <Link href={`/category/${category.slug}`} className="text-[11px] text-rose-400 hover:underline">
+                  <Link href={`/category/${category.slug}`} className="text-[11px] text-rose-500 hover:underline font-semibold">
                     Clear Filters
                   </Link>
                 )}
@@ -143,7 +143,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               {/* Brands Filter */}
               {availableBrands.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-brand-400">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-brand-400">
                     Brand
                   </h4>
                   <div className="space-y-1.5">
@@ -151,10 +151,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                       <Link
                         key={b.id}
                         href={`/category/${category.slug}${brandFilter === b.slug ? '' : `?brand=${b.slug}`}`}
-                        className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors ${
+                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors ${
                           brandFilter === b.slug
-                            ? 'bg-brand-500 text-navy-950 font-bold'
-                            : 'bg-slate-800/60 hover:bg-slate-800 text-slate-300'
+                            ? 'bg-sky-600 text-white dark:bg-brand-500 dark:text-navy-950 font-bold shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:text-slate-300'
                         }`}
                       >
                         <span>{b.name}</span>
@@ -166,12 +166,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               )}
 
               {/* Availability Filter Indicator */}
-              <div className="space-y-2 pt-2 border-t border-slate-800">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-brand-400">
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-brand-400">
                   Stock Status
                 </h4>
-                <div className="flex items-center gap-2 text-xs text-slate-300">
-                  <input type="checkbox" defaultChecked className="rounded border-slate-700 text-brand-500" readOnly />
+                <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                  <input type="checkbox" defaultChecked className="rounded border-slate-300 dark:border-slate-700 text-sky-600 dark:text-brand-500" readOnly />
                   <span>In Stock (Shop 1, 2 & WH)</span>
                 </div>
               </div>
@@ -181,36 +181,42 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           {/* Products Grid & Sorting */}
           <div className="lg:col-span-9 space-y-6">
             {/* Top Toolbar: Result Count & Sort Options */}
-            <div className="p-4 rounded-xl bg-navy-900 border border-slate-800 flex items-center justify-between flex-wrap gap-4 text-xs">
-              <span className="text-slate-400">
-                Showing <strong className="text-white">{products.length}</strong> items in <span className="text-brand-400 font-semibold">{category.name}</span>
+            <div className="p-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between flex-wrap gap-4 text-xs shadow-xs">
+              <span className="text-slate-500 dark:text-slate-400">
+                Showing <strong className="text-slate-900 dark:text-white font-bold">{products.length}</strong> items in <span className="text-sky-600 dark:text-brand-400 font-semibold">{category.name}</span>
               </span>
 
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 flex items-center gap-1">
+                <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
                   <ArrowUpDown className="w-3.5 h-3.5" /> Sort:
                 </span>
                 <div className="flex items-center gap-1">
                   <Link
                     href={`/category/${category.slug}?sort=featured${brandFilter ? `&brand=${brandFilter}` : ''}`}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
-                      sortBy === 'featured' ? 'bg-brand-500 text-navy-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      sortBy === 'featured'
+                        ? 'bg-sky-600 text-white dark:bg-brand-500 dark:text-navy-950 shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
                     Featured
                   </Link>
                   <Link
                     href={`/category/${category.slug}?sort=price_asc${brandFilter ? `&brand=${brandFilter}` : ''}`}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
-                      sortBy === 'price_asc' ? 'bg-brand-500 text-navy-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      sortBy === 'price_asc'
+                        ? 'bg-sky-600 text-white dark:bg-brand-500 dark:text-navy-950 shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
                     Price: Low to High
                   </Link>
                   <Link
                     href={`/category/${category.slug}?sort=price_desc${brandFilter ? `&brand=${brandFilter}` : ''}`}
-                    className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
-                      sortBy === 'price_desc' ? 'bg-brand-500 text-navy-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      sortBy === 'price_desc'
+                        ? 'bg-sky-600 text-white dark:bg-brand-500 dark:text-navy-950 shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
                     Price: High to Low
@@ -227,11 +233,11 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 ))}
               </div>
             ) : (
-              <div className="p-12 text-center rounded-2xl bg-navy-900 border border-slate-800 space-y-3">
-                <p className="text-slate-400 text-sm">No products found matching your current filter criteria.</p>
+              <div className="p-12 text-center rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-3 shadow-xs">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">No products found matching your current filter criteria.</p>
                 <Link
                   href={`/category/${category.slug}`}
-                  className="inline-block px-4 py-2 bg-brand-500 text-navy-950 font-bold text-xs rounded-xl"
+                  className="inline-block px-4 py-2 bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs rounded-xl shadow-xs transition-colors"
                 >
                   Reset Filters
                 </Link>
@@ -239,8 +245,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             )}
 
             {/* SEO Content & Long Description at Bottom (Requirement 5) */}
-            <div className="mt-12 p-6 sm:p-8 rounded-2xl bg-navy-900/60 border border-slate-800 space-y-4 text-xs text-slate-300 leading-relaxed">
-              <h3 className="text-base font-bold text-white">
+            <div className="mt-12 p-6 sm:p-8 rounded-2xl bg-white dark:bg-navy-900/60 border border-slate-200/80 dark:border-slate-800 space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed shadow-xs">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Buying Guide: Best {category.name} in Bangladesh
               </h3>
               <p>

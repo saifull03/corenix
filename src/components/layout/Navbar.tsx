@@ -18,6 +18,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import CategoryNav from '@/components/layout/CategoryNav';
+import { MEGA_CATEGORIES } from '@/lib/categories-data';
 
 export default function Navbar() {
   const router = useRouter();
@@ -25,6 +27,7 @@ export default function Navbar() {
   const [suggestions, setSuggestions] = useState<Array<{ text: string; type: string; slug: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedMobileCat, setExpandedMobileCat] = useState<string | null>(null);
   const [cartCount, setCartCount] = useState(1);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -217,78 +220,95 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Categories Bar */}
-      <nav className="bg-slate-50/90 dark:bg-navy-900/60 border-t border-slate-200/80 dark:border-slate-800/80 hidden md:block">
-        <div className="max-w-7xl mx-auto px-4 flex items-center gap-6 text-xs font-semibold text-slate-600 dark:text-slate-300 overflow-x-auto py-2.5">
-          <Link href="/products" className="flex items-center gap-1.5 text-sky-600 dark:text-brand-400 hover:text-sky-700 dark:hover:text-brand-300 font-bold whitespace-nowrap">
-            <Layers className="w-4 h-4" />
-            <span>All Products</span>
-          </Link>
-          <Link href="/category/processor" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Processors
-          </Link>
-          <Link href="/category/graphics-card" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Graphics Cards
-          </Link>
-          <Link href="/category/motherboard" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Motherboards
-          </Link>
-          <Link href="/category/ram" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Desktop RAM
-          </Link>
-          <Link href="/category/storage" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Storage (SSDs)
-          </Link>
-          <Link href="/category/power-supply" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Power Supplies
-          </Link>
-          <Link href="/category/laptops" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Laptops
-          </Link>
-          <Link href="/category/monitors" className="hover:text-sky-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors">
-            Monitors
-          </Link>
-          <Link href="/offers" className="text-amber-600 hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300 whitespace-nowrap font-bold ml-auto">
-            Hot Deals & Offers
-          </Link>
-        </div>
-      </nav>
+      {/* Categories Mega Navigation Bar */}
+      <CategoryNav />
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-navy-950 border-t border-slate-800 px-4 py-4 space-y-3">
+        <div className="lg:hidden bg-white dark:bg-navy-950 border-t border-slate-200 dark:border-slate-800 px-4 py-4 space-y-3 transition-colors shadow-xl max-h-[85vh] overflow-y-auto">
           <Link
             href="/pc-builder"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center justify-between p-3 rounded-lg bg-brand-500/10 border border-brand-500/30 text-brand-300 font-bold text-sm"
+            className="flex items-center justify-between p-3 rounded-xl bg-sky-50 dark:bg-brand-500/10 border border-sky-200 dark:border-brand-500/30 text-sky-700 dark:text-brand-300 font-bold text-sm"
           >
             <span>Interactive PC Builder</span>
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-sky-600 dark:text-brand-400" />
           </Link>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <Link href="/category/processor" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded bg-slate-900 text-slate-300">
-              Processors
-            </Link>
-            <Link href="/category/graphics-card" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded bg-slate-900 text-slate-300">
-              Graphics Cards
-            </Link>
-            <Link href="/category/motherboard" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded bg-slate-900 text-slate-300">
-              Motherboards
-            </Link>
-            <Link href="/category/laptops" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded bg-slate-900 text-slate-300">
-              Laptops
-            </Link>
-            <Link href="/category/monitors" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded bg-slate-900 text-slate-300">
-              Monitors
-            </Link>
-            <Link href="/offers" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded bg-amber-950 text-amber-300 font-bold">
-              Special Offers
-            </Link>
+
+          <Link
+            href="/offers"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-bold text-sm"
+          >
+            <span>Hot Deals & Special Offers</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-900 font-black">SAVE</span>
+          </Link>
+
+          {/* Categories Accordion */}
+          <div className="space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 py-1">
+              Browse Categories
+            </div>
+            {MEGA_CATEGORIES.map((cat) => {
+              const isExpanded = expandedMobileCat === cat.slug;
+              const subItems = cat.columns ? cat.columns.flat() : cat.items || [];
+              return (
+                <div key={cat.slug} className="border border-slate-100 dark:border-slate-800/80 rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-slate-50 dark:bg-navy-900">
+                    <Link
+                      href={`/category/${cat.slug}`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-sm font-semibold text-slate-800 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400"
+                    >
+                      {cat.name}
+                    </Link>
+                    {subItems.length > 0 && (
+                      <button
+                        onClick={() => setExpandedMobileCat(isExpanded ? null : cat.slug)}
+                        className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      >
+                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+                    )}
+                  </div>
+                  {isExpanded && subItems.length > 0 && (
+                    <div className="px-3.5 py-2 bg-white dark:bg-navy-950 border-t border-slate-100 dark:border-slate-800 space-y-1.5 max-h-60 overflow-y-auto">
+                      {subItems.map((sub) => (
+                        <div key={sub.slug} className="py-1">
+                          <Link
+                            href={`/category/${sub.slug}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400"
+                          >
+                            {sub.name}
+                          </Link>
+                          {sub.children && sub.children.length > 0 && (
+                            <div className="pl-3 mt-1 space-y-1 border-l-2 border-slate-100 dark:border-slate-800">
+                              {sub.children.map((child) => (
+                                <Link
+                                  key={child.slug}
+                                  href={`/category/${child.slug}`}
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className="block text-[11px] text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                                >
+                                  {child.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-            <Link href="/stores" onClick={() => setIsMobileMenuOpen(false)}>Shop 1 & Shop 2</Link>
-            <Link href="/rma" onClick={() => setIsMobileMenuOpen(false)}>RMA Service</Link>
-            <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-brand-400 font-semibold">Admin</Link>
+
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+            <Link href="/stores" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-sky-600 dark:hover:text-brand-400">Showrooms</Link>
+            <Link href="/rma" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-sky-600 dark:hover:text-brand-400">RMA Hub</Link>
+            <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)} className="text-sky-600 dark:text-brand-400 font-semibold">Admin</Link>
             <ThemeToggle />
           </div>
         </div>

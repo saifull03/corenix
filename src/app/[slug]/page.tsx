@@ -80,20 +80,20 @@ export default async function DynamicSlugPage({ params }: Props) {
     );
 
     return (
-      <div className="min-h-screen flex flex-col bg-navy-950 text-slate-100">
+      <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 font-sans transition-colors duration-200">
         <Navbar />
 
         <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full space-y-10">
           {/* SEO Landing Hero */}
-          <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-navy-900 via-slate-900 to-navy-900 border border-slate-800">
+          <div className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-gradient-to-r dark:from-navy-900 dark:via-slate-900 dark:to-navy-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
             <div className="max-w-3xl space-y-4">
-              <span className="px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs font-bold border border-brand-500/30">
+              <span className="px-3 py-1 rounded-full bg-sky-50 dark:bg-brand-500/20 text-sky-700 dark:text-brand-300 text-xs font-bold border border-sky-200 dark:border-brand-500/30">
                 Hardware Guide & Live Stock
               </span>
-              <h1 className="text-3xl sm:text-4xl font-black text-white">
+              <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
                 {seoPage.h1}
               </h1>
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 {seoPage.intro_text}
               </p>
             </div>
@@ -102,10 +102,10 @@ export default async function DynamicSlugPage({ params }: Props) {
           {/* Product Listing */}
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Available In-Stock Models
               </h2>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 Found {products.length} models with official warranty
               </span>
             </div>
@@ -118,8 +118,8 @@ export default async function DynamicSlugPage({ params }: Props) {
           </div>
 
           {/* Long SEO Content */}
-          <div className="p-8 rounded-3xl bg-navy-900/60 border border-slate-800 space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed">
-            <h3 className="text-lg font-bold text-white">
+          <div className="p-8 rounded-3xl bg-white dark:bg-navy-900/60 border border-slate-200/80 dark:border-slate-800 space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-xs">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
               Why Buy {seoPage.h1} from CORENIX?
             </h3>
             <p>
@@ -141,15 +141,15 @@ export default async function DynamicSlugPage({ params }: Props) {
 
   if (cmsPage) {
     return (
-      <div className="min-h-screen flex flex-col bg-navy-950 text-slate-100">
+      <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 font-sans transition-colors duration-200">
         <Navbar />
 
         <main className="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
-          <div className="p-8 sm:p-12 rounded-3xl bg-navy-900 border border-slate-800 space-y-6">
-            <h1 className="text-3xl sm:text-4xl font-black text-white">
+          <div className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-6 shadow-xs">
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
               {cmsPage.title}
             </h1>
-            <div className="text-sm text-slate-300 leading-relaxed space-y-4 whitespace-pre-line border-t border-slate-800 pt-6">
+            <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-4 whitespace-pre-line border-t border-slate-100 dark:border-slate-800 pt-6">
               {cmsPage.content}
             </div>
           </div>
