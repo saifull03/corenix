@@ -19,7 +19,7 @@ export default function ProductDetailActions({ product }: Props) {
       <div className="flex items-center gap-3">
         <button
           onClick={handleAddToCart}
-          className="flex-1 py-3.5 px-6 rounded-xl bg-brand-500 hover:bg-brand-400 text-navy-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all hover:scale-102"
+          className="flex-1 py-3.5 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-sky-600/20 hover:shadow-lg transition-all"
         >
           <ShoppingCart className="w-5 h-5" />
           <span>Add to Cart</span>
@@ -27,7 +27,7 @@ export default function ProductDetailActions({ product }: Props) {
 
         <Link
           href="/checkout"
-          className="flex-1 py-3.5 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-sm flex items-center justify-center gap-2 border border-slate-700 transition-all"
+          className="flex-1 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2.5 border border-slate-900 dark:border-white shadow-sm transition-all"
         >
           <Zap className="w-5 h-5 text-amber-400" />
           <span>Buy Now</span>
@@ -37,9 +37,9 @@ export default function ProductDetailActions({ product }: Props) {
       {product.is_pc_builder && (
         <Link
           href={`/pc-builder?select=${product.pc_builder_component}&pid=${product.id}`}
-          className="w-full py-2.5 px-4 rounded-xl bg-cyan-950/60 hover:bg-cyan-950 border border-brand-500/40 text-brand-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+          className="w-full py-3 px-4 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 dark:bg-cyan-950/40 dark:border-cyan-800/60 dark:text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-2xs"
         >
-          <Sparkles className="w-4 h-4 text-brand-400" />
+          <Sparkles className="w-4 h-4 text-sky-600 dark:text-brand-400" />
           <span>Add to Custom PC Build ({product.pc_builder_component?.toUpperCase()})</span>
         </Link>
       )}

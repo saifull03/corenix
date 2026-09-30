@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'CORENIX | Enterprise Computing & Technology Ecosystem',
@@ -21,8 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className={`dark ${plusJakarta.variable}`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -40,7 +54,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-navy-950 text-slate-100 min-h-screen selection:bg-brand-500 selection:text-white transition-colors duration-300">
+      <body className="bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 min-h-screen selection:bg-sky-500 selection:text-white font-sans antialiased transition-colors duration-200">
         <ThemeProvider>
           {children}
         </ThemeProvider>
@@ -48,3 +62,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -154,7 +154,7 @@ export default async function ProductDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-navy-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 font-sans transition-colors duration-200">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -163,25 +163,25 @@ export default async function ProductDetailPage({ params }: Props) {
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-6 w-full">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-6 flex-wrap">
-          <Link href="/" className="hover:text-brand-400">Home</Link>
-          <span>/</span>
-          <Link href="/products" className="hover:text-brand-400">Products</Link>
-          <span>/</span>
-          <Link href={`/category/${product.category_slug}`} className="hover:text-brand-400">
+        <nav className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-6 flex-wrap">
+          <Link href="/" className="hover:text-sky-600 dark:hover:text-brand-400 font-medium transition-colors">Home</Link>
+          <span className="text-slate-300 dark:text-slate-700">/</span>
+          <Link href="/products" className="hover:text-sky-600 dark:hover:text-brand-400 font-medium transition-colors">Products</Link>
+          <span className="text-slate-300 dark:text-slate-700">/</span>
+          <Link href={`/category/${product.category_slug}`} className="hover:text-sky-600 dark:hover:text-brand-400 font-medium transition-colors">
             {product.category_name}
           </Link>
-          <span>/</span>
-          <span className="text-slate-200 truncate max-w-xs">{product.name}</span>
+          <span className="text-slate-300 dark:text-slate-700">/</span>
+          <span className="text-slate-800 dark:text-slate-200 font-semibold truncate max-w-md">{product.name}</span>
         </nav>
 
         {/* TOP SECTION: Gallery + Key Info & Branch Availability */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
           {/* Left: Product Image Gallery */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="aspect-square bg-navy-900 border border-slate-800 rounded-3xl p-8 flex items-center justify-center relative overflow-hidden shadow-2xl">
+            <div className="aspect-square bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-8 flex items-center justify-center relative overflow-hidden shadow-xs dark:shadow-2xl">
               {product.discount_price && product.discount_price < product.selling_price && (
-                <div className="absolute top-4 left-4 bg-rose-600 text-white font-black text-xs px-3 py-1 rounded-lg uppercase tracking-wider shadow">
+                <div className="absolute top-4 left-4 bg-rose-500 text-white font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                   Save ৳{discountAmount.toLocaleString()}
                 </div>
               )}
@@ -189,25 +189,29 @@ export default async function ProductDetailPage({ params }: Props) {
               <img
                 src={product.primary_image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=80'}
                 alt={product.name}
-                className="w-full h-full object-contain hover:scale-108 transition-transform duration-500"
+                className="w-full h-full object-contain hover:scale-105 transition-transform duration-500"
               />
             </div>
 
             {/* Quick badges under image */}
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-navy-900 border border-slate-800 flex items-center gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-brand-400 flex-shrink-0" />
+              <div className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3 shadow-2xs">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-brand-500/10 text-sky-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
                 <div>
-                  <span className="text-white font-bold block">{product.warranty_period}</span>
-                  <span className="text-[11px] text-slate-400">Official Brand Warranty</span>
+                  <span className="text-slate-900 dark:text-white font-bold block">{product.warranty_period}</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Official Brand Warranty</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-navy-900 border border-slate-800 flex items-center gap-2.5">
-                <CreditCard className="w-5 h-5 text-purple-400 flex-shrink-0" />
+              <div className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3 shadow-2xs">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-5 h-5" />
+                </div>
                 <div>
-                  <span className="text-white font-bold block">0% EMI Available</span>
-                  <span className="text-[11px] text-slate-400">Up to 12 Months</span>
+                  <span className="text-slate-900 dark:text-white font-bold block">0% EMI Available</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Up to 12 Months</span>
                 </div>
               </div>
             </div>
@@ -216,51 +220,58 @@ export default async function ProductDetailPage({ params }: Props) {
           {/* Right: Product Details, Pricing, Stock & Actions */}
           <div className="lg:col-span-7 space-y-6">
             <div>
-              <div className="flex items-center gap-3 text-xs mb-2">
+              <div className="flex items-center gap-2.5 text-xs mb-3 flex-wrap">
                 <Link
                   href={`/brand/${product.brand_slug}`}
-                  className="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-brand-300 font-bold uppercase tracking-wider"
+                  className="px-3 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-brand-300 dark:border-slate-700 font-bold uppercase tracking-wider transition-colors"
                 >
                   {product.brand_name}
                 </Link>
-                <span className="text-slate-500 font-mono">SKU: {product.sku}</span>
-                {product.model && <span className="text-slate-500 font-mono">Model: {product.model}</span>}
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                  SKU: {product.sku}
+                </span>
+                {product.model && (
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-mono text-[11px]">
+                    Model: {product.model}
+                  </span>
+                )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-black text-white leading-snug">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                 {product.name}
               </h1>
 
               {/* Rating and Reviews */}
-              <div className="flex items-center gap-4 mt-2 text-xs">
-                <div className="flex items-center gap-1 text-amber-400">
-                  <Star className="w-4 h-4 fill-amber-400" />
-                  <span className="font-bold text-slate-100">{Number(product.rating_avg || 5.0).toFixed(1)}</span>
-                  <span className="text-slate-400">({product.rating_count || 12} reviews)</span>
+              <div className="flex items-center gap-3 mt-3 text-xs flex-wrap">
+                <div className="flex items-center gap-1.5 text-amber-500">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span className="font-bold text-slate-800 dark:text-slate-100">{Number(product.rating_avg || 5.0).toFixed(1)}</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-normal">({product.rating_count || 12} reviews)</span>
                 </div>
-                <span className="text-slate-600">|</span>
-                <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                  <CheckCircle2 className="w-4 h-4" /> Verifiable Genuine Serial
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <span className="inline-flex items-center gap-1.5 font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  Verifiable Genuine Serial
                 </span>
               </div>
             </div>
 
             {/* Price Box */}
-            <div className="p-5 rounded-2xl bg-navy-900 border border-slate-800 flex items-baseline justify-between flex-wrap gap-4">
+            <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-baseline justify-between flex-wrap gap-4 shadow-xs">
               <div>
-                <span className="text-xs uppercase font-bold tracking-wider text-slate-400 block mb-1">
+                <span className="text-xs uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                   Cash Special Price
                 </span>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-3xl sm:text-4xl font-black text-brand-400 tracking-tight">
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-sky-600 dark:text-brand-400 tracking-tight">
                     ৳{currentPrice.toLocaleString()}
                   </span>
                   {product.discount_price && product.discount_price < product.selling_price && (
-                    <div className="flex flex-col">
-                      <span className="text-sm text-slate-500 line-through">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-400 dark:text-slate-500 line-through font-medium">
                         Regular: ৳{regularPrice.toLocaleString()}
                       </span>
-                      <span className="text-xs text-rose-400 font-bold">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60">
                         Save ৳{discountAmount.toLocaleString()} ({product.discount_percent}% OFF)
                       </span>
                     </div>
@@ -269,22 +280,27 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
 
               <div className="text-right">
-                <span className="text-xs text-slate-400 block">Estimated EMI</span>
-                <span className="text-sm font-bold text-white">৳{(Math.round(currentPrice / 12)).toLocaleString()} / mo</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 block">Estimated EMI</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-white px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 inline-block mt-0.5">
+                  ৳{(Math.round(currentPrice / 12)).toLocaleString()} / mo
+                </span>
               </div>
             </div>
 
             {/* Key Features Bullet Points */}
             {keyFeatures.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   Key Specifications:
                 </h4>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {keyFeatures.map((kf, i) => (
-                    <li key={i} className="flex items-start gap-2 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-400 mt-1.5 flex-shrink-0"></span>
-                      <span>{kf}</span>
+                    <li
+                      key={i}
+                      className="flex items-start gap-2.5 bg-white dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-800/80 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-colors shadow-2xs"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 dark:bg-brand-400 mt-1.5 flex-shrink-0"></span>
+                      <span className="font-medium leading-relaxed">{kf}</span>
                     </li>
                   ))}
                 </ul>
@@ -292,31 +308,36 @@ export default async function ProductDetailPage({ params }: Props) {
             )}
 
             {/* LOCATION-BASED INVENTORY (Requirement 14 & 26) */}
-            <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-brand-400" />
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 space-y-3.5 shadow-xs">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-sky-600 dark:text-brand-400" />
                   Live Branch & Warehouse Availability:
                 </span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  totalAvailableStock > 0 ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300'
+                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                  totalAvailableStock > 0
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950 dark:text-rose-300'
                 }`}>
-                  {totalAvailableStock > 0 ? `Total In Stock: ${totalAvailableStock} Units` : 'Out of Stock'}
+                  {totalAvailableStock > 0 ? `Total Available: ${totalAvailableStock} Units` : 'Out of Stock'}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {inventory.map((inv) => {
                   const avail = Math.max(0, inv.quantity - inv.reserved_qty);
                   return (
-                    <div key={inv.branch_id} className="p-2.5 rounded-lg bg-navy-950 border border-slate-800 text-center">
-                      <span className="text-[11px] font-semibold text-slate-400 block truncate" title={inv.branch_name}>
-                        {inv.branch_code}
+                    <div
+                      key={inv.branch_id}
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-200/80 dark:border-slate-800 text-center"
+                    >
+                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block truncate" title={inv.branch_name}>
+                        {inv.branch_name || inv.branch_code}
                       </span>
-                      <span className={`text-sm font-black mt-0.5 block ${
-                        avail > 0 ? 'text-emerald-400' : 'text-slate-500'
+                      <span className={`text-sm font-extrabold mt-1 block ${
+                        avail > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-600'
                       }`}>
-                        {avail > 0 ? `${avail} in Stock` : '0 Units'}
+                        {avail > 0 ? `${avail} in Stock` : 'Out of Stock'}
                       </span>
                     </div>
                   );
@@ -333,33 +354,33 @@ export default async function ProductDetailPage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
           <div className="lg:col-span-8 space-y-8">
             {/* Overview & Description */}
-            <div className="p-6 sm:p-8 rounded-2xl bg-navy-900 border border-slate-800 space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-brand-400" />
+            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5">
+                <Layers className="w-5 h-5 text-sky-600 dark:text-brand-400" />
                 <span>Product Overview & Details</span>
               </h2>
-              <div className="text-sm text-slate-300 leading-relaxed space-y-4 whitespace-pre-line">
+              <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-4 whitespace-pre-line">
                 {(product as any).overview || 'No additional overview provided.'}
               </div>
             </div>
 
             {/* Dynamic Specifications Table (Requirement 10 & 11) */}
-            <div className="p-6 sm:p-8 rounded-2xl bg-navy-900 border border-slate-800 space-y-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-brand-400" />
+            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-6 shadow-xs">
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5">
+                <Layers className="w-5 h-5 text-sky-600 dark:text-brand-400" />
                 <span>Technical Specifications</span>
               </h2>
 
               {specs.length > 0 ? (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800">
                   <table className="w-full text-left text-xs border-collapse">
                     <tbody>
                       {specs.map((s, idx) => (
-                        <tr key={idx} className="border-b border-slate-800/80 hover:bg-slate-800/40 transition-colors">
-                          <td className="py-3 px-4 font-bold text-slate-400 w-1/3 bg-slate-900/40">
+                        <tr key={idx} className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                          <td className="py-3 px-4 font-semibold text-slate-500 dark:text-slate-400 w-1/3 bg-slate-50/60 dark:bg-slate-900/40">
                             {s.custom_label || s.attribute_name}
                           </td>
-                          <td className="py-3 px-4 font-medium text-slate-200">
+                          <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
                             {s.attribute_value}
                           </td>
                         </tr>
@@ -374,22 +395,22 @@ export default async function ProductDetailPage({ params }: Props) {
 
             {/* What's in the Box & Warranty */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 space-y-2">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Package className="w-4 h-4 text-brand-400" />
+              <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Package className="w-4 h-4 text-sky-600 dark:text-brand-400" />
                   <span>What&apos;s in the Box</span>
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   {(product as any).what_in_box || 'Standard retail package accessories and official documents.'}
                 </p>
               </div>
 
-              <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 space-y-2">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-brand-400" />
+              <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-brand-400" />
                   <span>Warranty & Service Policy</span>
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   {product.warranty_period}. Serviced at CORENIX Agargaon RMA Hub or official authorized distributor centers with replacement guarantee.
                 </p>
               </div>
@@ -398,37 +419,37 @@ export default async function ProductDetailPage({ params }: Props) {
 
           {/* Right Column: Related Hardware Recommendations */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="p-6 rounded-2xl bg-navy-900 border border-slate-800 space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center justify-between">
+            <div className="p-6 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center justify-between">
                 <span>Related Products</span>
-                <Link href={`/category/${product.category_slug}`} className="text-xs text-brand-400 hover:underline">
+                <Link href={`/category/${product.category_slug}`} className="text-xs text-sky-600 dark:text-brand-400 hover:underline font-semibold">
                   View More
                 </Link>
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {related.map((rp) => (
                   <Link
                     key={rp.id}
                     href={`/product/${rp.slug}`}
-                    className="p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 flex items-center gap-3 transition-colors group"
+                    className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 dark:bg-slate-900/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3 transition-colors group"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={rp.primary_image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=400&q=80'}
                       alt={rp.name}
-                      className="w-14 h-14 object-contain bg-navy-950 rounded-lg p-1"
+                      className="w-14 h-14 object-contain bg-white dark:bg-navy-950 rounded-xl p-1 border border-slate-200/60 dark:border-slate-800"
                     />
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-semibold text-slate-200 group-hover:text-brand-300 truncate">
+                      <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-brand-300 truncate">
                         {rp.name}
                       </h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-bold text-brand-400">
+                        <span className="text-xs font-bold text-sky-600 dark:text-brand-400">
                           ৳{(rp.discount_price || rp.selling_price).toLocaleString()}
                         </span>
                         {rp.discount_price && (
-                          <span className="text-[10px] text-slate-500 line-through">
+                          <span className="text-[10px] text-slate-400 line-through">
                             ৳{rp.selling_price.toLocaleString()}
                           </span>
                         )}
@@ -440,17 +461,17 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
 
             {/* RMA Assistance Card */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-navy-900 border border-brand-500/30 space-y-3">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-brand-400">
+            <div className="p-6 rounded-3xl bg-gradient-to-br from-sky-50 to-blue-50/50 dark:from-slate-900 dark:to-navy-900 border border-sky-200/80 dark:border-brand-500/30 space-y-3 shadow-xs">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-sky-700 dark:text-brand-400">
                 Official After-Sales Guarantee
               </span>
-              <h4 className="text-sm font-bold text-white">Need Technical Support or RMA Service?</h4>
-              <p className="text-xs text-slate-400">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">Need Technical Support or RMA Service?</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 Direct component replacement and status tracking at our dedicated Agargaon RMA Hub.
               </p>
               <Link
                 href="/rma"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-400 hover:text-brand-300"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 dark:text-brand-400 hover:text-sky-700 dark:hover:text-brand-300"
               >
                 <span>Track or Claim RMA</span>
                 <ArrowRight className="w-3.5 h-3.5" />

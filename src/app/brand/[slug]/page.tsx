@@ -87,45 +87,45 @@ export default async function BrandPage({ params, searchParams }: Props) {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-navy-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 font-sans transition-colors duration-200">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
         {/* Brand Banner & Header */}
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-navy-900 via-slate-900 to-navy-900 border border-slate-800 mb-10 relative overflow-hidden">
+        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-gradient-to-r dark:from-navy-900 dark:via-slate-900 dark:to-navy-900 border border-slate-200/80 dark:border-slate-800 mb-10 relative overflow-hidden shadow-xs">
           <div className="max-w-3xl space-y-4">
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs font-bold border border-brand-500/30">
+              <span className="px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-brand-500/20 dark:text-brand-300 dark:border-brand-500/30 text-xs font-bold">
                 Official Brand Partner
               </span>
               {brand.country && (
-                <span className="text-xs text-slate-400 font-medium">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Origin: {brand.country}
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-black text-white">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {brand.name} in Bangladesh
             </h1>
 
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {brand.description || `Explore authentic ${brand.name} computing products with official manufacturer warranties, verified serials, and multi-branch support across CORENIX showrooms.`}
             </p>
 
-            <div className="flex items-center gap-4 pt-2 text-xs">
+            <div className="flex items-center gap-4 pt-2 text-xs flex-wrap">
               {brand.website && (
                 <a
                   href={brand.website}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1.5 text-brand-400 hover:underline font-semibold"
+                  className="flex items-center gap-1.5 text-sky-600 dark:text-brand-400 hover:underline font-semibold"
                 >
                   <Globe className="w-4 h-4" />
                   <span>Official Global Website</span>
                 </a>
               )}
-              <span className="text-emerald-400 flex items-center gap-1 font-semibold">
+              <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
                 <ShieldCheck className="w-4 h-4" /> Official Brand Warranty
               </span>
             </div>
@@ -135,12 +135,12 @@ export default async function BrandPage({ params, searchParams }: Props) {
         {/* Categories Bar for this Brand */}
         {categories.length > 0 && (
           <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-2 text-xs">
-            <span className="text-slate-400 font-semibold mr-2">Categories:</span>
+            <span className="text-slate-500 dark:text-slate-400 font-semibold mr-2">Categories:</span>
             {categories.map((c) => (
               <Link
                 key={c.id}
                 href={`/category/${c.slug}?brand=${brand.slug}`}
-                className="px-3 py-1.5 rounded-lg bg-navy-900 hover:bg-slate-800 border border-slate-800 text-slate-300 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-navy-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors shadow-2xs font-medium"
               >
                 {c.name}
               </Link>
@@ -149,35 +149,41 @@ export default async function BrandPage({ params, searchParams }: Props) {
         )}
 
         {/* Toolbar */}
-        <div className="p-4 rounded-xl bg-navy-900 border border-slate-800 flex items-center justify-between mb-6 text-xs">
-          <span className="text-slate-400">
-            Showing <strong className="text-white">{products.length}</strong> official {brand.name} products
+        <div className="p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between mb-8 text-xs shadow-xs flex-wrap gap-4">
+          <span className="text-slate-500 dark:text-slate-400">
+            Showing <strong className="text-slate-900 dark:text-white font-bold">{products.length}</strong> official {brand.name} products
           </span>
 
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 flex items-center gap-1">
+            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
               <ArrowUpDown className="w-3.5 h-3.5" /> Sort:
             </span>
             <Link
               href={`/brand/${brand.slug}?sort=featured`}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
-                sortBy === 'featured' ? 'bg-brand-500 text-navy-950' : 'bg-slate-800 text-slate-300'
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                sortBy === 'featured'
+                  ? 'bg-sky-600 text-white dark:bg-brand-500 dark:text-navy-950 shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
               }`}
             >
               Featured
             </Link>
             <Link
               href={`/brand/${brand.slug}?sort=price_asc`}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
-                sortBy === 'price_asc' ? 'bg-brand-500 text-navy-950' : 'bg-slate-800 text-slate-300'
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                sortBy === 'price_asc'
+                  ? 'bg-sky-600 text-white dark:bg-brand-500 dark:text-navy-950 shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
               }`}
             >
               Price: Low to High
             </Link>
             <Link
               href={`/brand/${brand.slug}?sort=price_desc`}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
-                sortBy === 'price_desc' ? 'bg-brand-500 text-navy-950' : 'bg-slate-800 text-slate-300'
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                sortBy === 'price_desc'
+                  ? 'bg-sky-600 text-white dark:bg-brand-500 dark:text-navy-950 shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
               }`}
             >
               Price: High to Low
