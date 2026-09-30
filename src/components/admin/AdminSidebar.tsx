@@ -23,11 +23,13 @@ import {
   CheckSquare,
   RefreshCw,
   FileText,
-  Shield,
   ExternalLink,
   LayoutTemplate,
-  Image
+  X,
+  PanelLeftClose,
+  Menu
 } from 'lucide-react';
+import { useAdminSidebar } from './AdminSidebarContext';
 
 const menuItems = [
   { label: 'Executive Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -56,74 +58,115 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { isCollapsed, isMobileOpen, setIsMobileOpen, toggleSidebar } = useAdminSidebar();
+
+  const handleLinkClick = () => {
+    setIsMobileOpen(false);
+  };
 
   return (
-    <aside className="w-64 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between h-screen sticky top-0 overflow-y-auto transition-colors">
-      <div>
-        {/* Brand Header */}
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-xs">
-              C
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileOpen && (
+        <div
+          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Main Sidebar Container */}
+      <aside
+        className={`
+          fixed lg:sticky top-0 z-50 lg:z-30 h-screen bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-slate-800
+          flex flex-col justify-between overflow-y-auto transition-all duration-300 ease-in-out
+          ${/* Mobile sliding drawer */ ''}
+          ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+          ${/* Desktop collapsible state */ ''}
+          ${isCollapsed ? 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:opacity-0 lg:pointer-events-none' : 'lg:w-64 lg:opacity-100'}
+        `}
+      >
+        <div>
+          {/* Brand Header & Toggle Controls */}
+          <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+            <Link href="/admin" onClick={handleLinkClick} className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-xs shrink-0">
+                C
+              </div>
+              <div className="min-w-0">
+                <span className="text-base font-black text-slate-900 dark:text-white tracking-wider block truncate">
+                  CORENIX
+                </span>
+                <span className="text-[10px] text-sky-600 dark:text-brand-400 font-bold uppercase tracking-wider block -mt-1 truncate">
+                  Enterprise Hub
+                </span>
+              </div>
+            </Link>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <Link
+                href="/"
+                target="_blank"
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                title="View Storefront"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+
+              {/* Close / Collapse Button */}
+              <button
+                onClick={toggleSidebar}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                title="Hide / Collapse Menu"
+              >
+                <span className="hidden lg:inline"><PanelLeftClose className="w-4 h-4" /></span>
+                <span className="lg:hidden"><X className="w-4 h-4" /></span>
+              </button>
             </div>
-            <div>
-              <span className="text-base font-black text-slate-900 dark:text-white tracking-wider block">CORENIX</span>
-              <span className="text-[10px] text-sky-600 dark:text-brand-400 font-bold uppercase tracking-wider block -mt-1">
-                Enterprise Hub
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="p-3 space-y-1 text-xs font-semibold">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={handleLinkClick}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors ${
+                    item.indent ? 'pl-7 text-[11px]' : ''
+                  } ${
+                    isActive
+                      ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/20 dark:bg-brand-500 dark:text-navy-950 dark:shadow-cyan-500/10'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white dark:text-navy-950' : 'text-slate-400'}`} />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Role Badge and System Status */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-navy-950/60 text-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-cyan-950 border border-sky-200 dark:border-brand-500/30 flex items-center justify-center font-bold text-sky-700 dark:text-brand-400 shrink-0">
+              SA
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-slate-900 dark:text-white font-bold block truncate">Super Administrator</span>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                All Branches Active
               </span>
             </div>
-          </Link>
-
-          <Link
-            href="/"
-            target="_blank"
-            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-            title="View Storefront"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {/* Navigation Links */}
-        <nav className="p-3 space-y-1 text-xs font-semibold">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors ${
-                  item.indent ? 'pl-7 text-[11px]' : ''
-                } ${
-                  isActive
-                    ? 'bg-sky-600 text-white font-bold shadow-md shadow-sky-600/20 dark:bg-brand-500 dark:text-navy-950 dark:shadow-cyan-500/10'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-white'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white dark:text-navy-950' : 'text-slate-400'}`} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Role Badge and System Status */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-navy-950/60 text-xs">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-cyan-950 border border-sky-200 dark:border-brand-500/30 flex items-center justify-center font-bold text-sky-700 dark:text-brand-400">
-            SA
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-slate-900 dark:text-white font-bold block truncate">Super Administrator</span>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              All Branches Active
-            </span>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
