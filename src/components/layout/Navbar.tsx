@@ -29,7 +29,21 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMobileCat, setExpandedMobileCat] = useState<string | null>(null);
   const [cartCount, setCartCount] = useState(1);
+  const [session, setSession] = useState<{ authenticated: boolean; userType: 'staff' | 'customer' | null; user: any | null }>({
+    authenticated: false,
+    userType: null,
+    user: null,
+  });
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated) setSession(data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Autocomplete debounced search
   useEffect(() => {
@@ -94,8 +108,11 @@ export default function Navbar() {
               <span>RMA & Warranty Status</span>
             </Link>
             <span className="text-slate-300 dark:text-slate-700">|</span>
-            <Link href="/admin" className="text-slate-700 hover:text-sky-600 dark:text-slate-300 dark:hover:text-brand-400 font-semibold transition-colors">
-              Staff / Admin Portal
+            <Link
+              href={session.userType === 'staff' ? '/admin' : '/account'}
+              className="text-slate-700 hover:text-sky-600 dark:text-slate-300 dark:hover:text-brand-400 font-semibold transition-colors"
+            >
+              {session.userType === 'staff' ? 'Admin Dashboard' : 'Staff / Admin Portal'}
             </Link>
           </div>
         </div>
@@ -193,8 +210,28 @@ export default function Navbar() {
             href="/account"
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 text-xs font-semibold transition-colors"
           >
-            <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-            <span className="hidden lg:inline-block">Account</span>
+            {session.userType === 'staff' ? (
+              <>
+                <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-cyan-400" />
+                <span className="hidden lg:inline-block font-bold text-sky-600 dark:text-cyan-400">
+                  {session.user?.name?.split(' ')[0] || 'Staff'}
+                </span>
+              </>
+            ) : session.userType === 'customer' ? (
+              <>
+                <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">
+                  {session.user?.name?.charAt(0) || 'C'}
+                </div>
+                <span className="hidden lg:inline-block">
+                  {session.user?.name?.split(' ')[0] || 'Account'}
+                </span>
+              </>
+            ) : (
+              <>
+                <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <span className="hidden lg:inline-block">Sign In</span>
+              </>
+            )}
           </Link>
 
           {/* Cart Drawer Trigger */}

@@ -52,14 +52,14 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function getCurrentCustomer(): Promise<any | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get('corenix_cust_token')?.value;
+  const token = cookieStore.get('corenix_cust_token')?.value || cookieStore.get('corenix_token')?.value;
   if (!token) return null;
 
   const decoded = verifyToken(token);
   if (!decoded || decoded.type !== 'customer') return null;
 
   const customer = await queryOne<any>(
-    `SELECT id, name, email, phone, is_verified, reward_points, status
+    `SELECT id, name, email, phone, is_verified, reward_points, status, created_at
      FROM customers
      WHERE id = ? AND status = 'active'`,
     [decoded.userId]
@@ -67,7 +67,32 @@ export async function getCurrentCustomer(): Promise<any | null> {
   return customer || null;
 }
 
+export async function getAuthSession() {
+  const staff = await getCurrentUser();
+  if (staff) {
+    return {
+      authenticated: true,
+      userType: 'staff' as const,
+      user: staff,
+    };
+  }
+  const customer = await getCurrentCustomer();
+  if (customer) {
+    return {
+      authenticated: true,
+      userType: 'customer' as const,
+      user: customer,
+    };
+  }
+  return {
+    authenticated: false,
+    userType: null,
+    user: null,
+  };
+}
+
 export function hasPermission(userRole: string, allowedRoles: string[]): boolean {
   if (userRole === 'super-admin') return true;
   return allowedRoles.includes(userRole);
 }
+
