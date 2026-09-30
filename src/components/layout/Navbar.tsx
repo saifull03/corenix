@@ -7,7 +7,6 @@ import {
   Search,
   ShoppingCart,
   Cpu,
-  MapPin,
   User,
   ShieldCheck,
   ChevronDown,
@@ -88,36 +87,6 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-navy-950/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-colors">
-      {/* Top micro-bar: Branch info, Hotline & Admin access */}
-      <div className="bg-slate-50/90 dark:bg-navy-900/90 border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-1.5 text-xs text-slate-600 dark:text-slate-400">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-sky-600 dark:text-brand-400 font-semibold">
-              <MapPin className="w-3.5 h-3.5" />
-              <span>Showrooms: Uttara (Shop 1) & Dhanmondi (Shop 2)</span>
-            </span>
-            <span className="hidden md:inline-block text-slate-300 dark:text-slate-600">|</span>
-            <span className="hidden md:inline-block text-slate-600 dark:text-slate-400">
-              Hotline: <strong className="text-slate-800 dark:text-slate-200 font-bold">+880 9600-267364</strong> (10 AM - 9 PM)
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link href="/rma" className="hover:text-sky-600 dark:hover:text-brand-400 flex items-center gap-1 transition-colors">
-              <ShieldCheck className="w-3.5 h-3.5 text-sky-600 dark:text-brand-400" />
-              <span>RMA & Warranty Status</span>
-            </Link>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <Link
-              href={session.userType === 'staff' ? '/admin' : '/account'}
-              className="text-slate-700 hover:text-sky-600 dark:text-slate-300 dark:hover:text-brand-400 font-semibold transition-colors"
-            >
-              {session.userType === 'staff' ? 'Admin Dashboard' : 'Staff / Admin Portal'}
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Main navigation row */}
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Brand Logo */}
