@@ -272,7 +272,7 @@ export default function Navbar() {
                     )}
                   </div>
                   {isExpanded && subItems.length > 0 && (
-                    <div className="px-3.5 py-2 bg-white dark:bg-navy-950 border-t border-slate-100 dark:border-slate-800 space-y-1.5 max-h-60 overflow-y-auto">
+                    <div className="px-3.5 py-2 bg-white dark:bg-navy-950 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
                       {subItems.map((sub) => (
                         <div key={sub.slug} className="py-1">
                           <Link
