@@ -307,3 +307,63 @@ html:not(.dark) th {
   color: #475569 !important;
   background-color: #F8FAFC;
 }
+
+/* Print Optimization for Quotations & Invoices */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm 8mm 6mm 8mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  /* Force clean display of quotation container */
+  #quotation-printable {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 8.5pt !important;
+    line-height: 1.2 !important;
+  }
+
+  #quotation-printable table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  #quotation-printable tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto;
+  }
+
+  #quotation-printable td,
+  #quotation-printable th {
+    padding: 2px 4px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure background colors and borders are preserved */
+  table, th, td, tr {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+}

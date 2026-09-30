@@ -29,6 +29,9 @@ export async function GET(req: NextRequest) {
       params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
 
+    const limitParam = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = Math.min(Math.max(1, isNaN(limitParam) ? 50 : limitParam), 500);
+
     const products = await query<any[]>(
       `SELECT p.*,
               b.name as brand_name, b.slug as brand_slug,
@@ -40,7 +43,7 @@ export async function GET(req: NextRequest) {
        JOIN categories c ON p.category_id = c.id
        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
        WHERE ${conditions.join(' AND ')}
-       ORDER BY p.id DESC LIMIT 50`,
+       ORDER BY p.id DESC LIMIT ${limit}`,
       params
     );
 

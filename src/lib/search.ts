@@ -171,18 +171,46 @@ export async function searchProducts(options: SearchOptions): Promise<{
   };
 }
 
-export async function getAutocompleteSuggestions(queryText: string): Promise<Array<{ text: string; type: 'product' | 'category' | 'brand'; slug: string }>> {
+export async function getAutocompleteSuggestions(queryText: string): Promise<Array<{
+  text: string;
+  type: 'product' | 'category' | 'brand';
+  slug: string;
+  image?: string;
+  price?: number;
+  discount_price?: number;
+  sku?: string;
+}>> {
   if (!queryText || queryText.trim().length < 2) return [];
 
   const pattern = `%${queryText.trim()}%`;
-  const results: Array<{ text: string; type: 'product' | 'category' | 'brand'; slug: string }> = [];
+  const results: Array<{
+    text: string;
+    type: 'product' | 'category' | 'brand';
+    slug: string;
+    image?: string;
+    price?: number;
+    discount_price?: number;
+    sku?: string;
+  }> = [];
 
   // Products
   const products = await query<any[]>(
-    `SELECT name, slug FROM products WHERE status = 'published' AND (name LIKE ? OR sku LIKE ?) LIMIT 5`,
-    [pattern, pattern]
+    `SELECT p.name, p.slug, p.sku, p.selling_price, p.discount_price, pi.image_url as primary_image
+     FROM products p
+     LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+     WHERE p.status = 'published' AND (p.name LIKE ? OR p.sku LIKE ? OR p.model LIKE ?)
+     LIMIT 6`,
+    [pattern, pattern, pattern]
   );
-  products.forEach(p => results.push({ text: p.name, type: 'product', slug: `/product/${p.slug}` }));
+  products.forEach(p => results.push({
+    text: p.name,
+    type: 'product',
+    slug: `/product/${p.slug}`,
+    image: p.primary_image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=150&q=80',
+    price: Number(p.selling_price || 0),
+    discount_price: p.discount_price ? Number(p.discount_price) : undefined,
+    sku: p.sku,
+  }));
 
   // Categories
   const categories = await query<any[]>(

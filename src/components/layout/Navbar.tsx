@@ -23,7 +23,15 @@ import { MEGA_CATEGORIES } from '@/lib/categories-data';
 export default function Navbar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<Array<{ text: string; type: string; slug: string }>>([]);
+  const [suggestions, setSuggestions] = useState<Array<{
+    text: string;
+    type: string;
+    slug: string;
+    image?: string;
+    price?: number;
+    discount_price?: number;
+    sku?: string;
+  }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMobileCat, setExpandedMobileCat] = useState<string | null>(null);
@@ -126,32 +134,68 @@ export default function Navbar() {
 
           {/* Autocomplete Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
-              <div className="p-2 border-b border-slate-100 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span>Instant Suggestions</span>
-                <span className="text-sky-600 dark:text-brand-400">Press Enter for full search</span>
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fadeIn">
+              <div className="p-2.5 px-3.5 border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between bg-slate-50/70 dark:bg-navy-950/50">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-sky-500 dark:text-brand-400" />
+                  <span>Instant Suggestions</span>
+                </span>
+                <span className="text-sky-600 dark:text-brand-400 font-semibold text-[10px]">Press Enter for full search</span>
               </div>
-              <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/50">
+              <ul className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
                 {suggestions.map((item, idx) => (
                   <li key={idx}>
                     <Link
                       href={item.slug}
                       onClick={() => setShowSuggestions(false)}
-                      className="px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors group"
+                      className="px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between transition-colors group gap-3"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                          item.type === 'product' ? 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-cyan-950 dark:text-brand-300 dark:border-brand-800' :
-                          item.type === 'category' ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800' :
-                          'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
-                        }`}>
-                          {item.type}
-                        </span>
-                        <span className="text-sm text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-brand-300 font-medium">
-                          {item.text}
-                        </span>
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {item.type === 'product' && (
+                          <div className="w-11 h-11 rounded-lg bg-white dark:bg-navy-950 border border-slate-200/90 dark:border-slate-800 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={item.image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=150&q=80'}
+                              alt={item.text}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                              item.type === 'product' ? 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-cyan-950 dark:text-brand-300 dark:border-brand-800' :
+                              item.type === 'category' ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800' :
+                              'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
+                            }`}>
+                              {item.type}
+                            </span>
+                            {item.sku && (
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                SKU: {item.sku}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-brand-300 font-medium truncate mt-1">
+                            {item.text}
+                          </div>
+                        </div>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-sky-600 dark:group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
+
+                      {item.type === 'product' && (item.discount_price || item.price) ? (
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-xs font-bold text-sky-600 dark:text-brand-400">
+                            ৳{(item.discount_price || item.price)?.toLocaleString()}
+                          </div>
+                          {item.discount_price && item.price && item.discount_price < item.price && (
+                            <div className="text-[10px] text-slate-400 line-through">
+                              ৳{item.price.toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-sky-600 dark:group-hover:text-brand-400 group-hover:translate-x-1 transition-all shrink-0" />
                     </Link>
                   </li>
                 ))}
