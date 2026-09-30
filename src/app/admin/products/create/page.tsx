@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Package,
   Layers,
@@ -323,19 +324,34 @@ export default function CreateProductPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1 font-semibold">Brand Partner *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-400 font-semibold">Brand Partner *</label>
+                  <Link href="/admin/brands" target="_blank" className="text-[11px] text-brand-400 hover:underline font-semibold">
+                    + Manage Brands
+                  </Link>
+                </div>
                 <select
                   value={formData.brand_id}
                   onChange={(e) => handleChange('brand_id', Number(e.target.value))}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
                 >
-                  <option value={1}>MSI</option>
-                  <option value={2}>ASUS</option>
-                  <option value={3}>Gigabyte</option>
-                  <option value={4}>Intel</option>
-                  <option value={5}>AMD</option>
-                  <option value={6}>Corsair</option>
-                  <option value={7}>Samsung</option>
+                  {brands.length > 0 ? (
+                    brands.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} {b.country ? `(${b.country})` : ''}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value={1}>MSI</option>
+                      <option value={2}>ASUS</option>
+                      <option value={3}>Gigabyte</option>
+                      <option value={4}>Intel</option>
+                      <option value={5}>AMD</option>
+                      <option value={6}>Corsair</option>
+                      <option value={7}>Samsung</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>
