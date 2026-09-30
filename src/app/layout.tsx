@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { CartProvider } from '@/context/CartContext';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -56,7 +57,9 @@ export default function RootLayout({
       </head>
       <body className="bg-slate-50 text-slate-800 dark:bg-navy-950 dark:text-slate-100 min-h-screen selection:bg-sky-500 selection:text-white font-sans antialiased transition-colors duration-200">
         <ThemeProvider>
-          {children}
+          <CartProvider>
+            {children}
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

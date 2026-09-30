@@ -1,17 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Zap, Sparkles } from 'lucide-react';
+import { ShoppingCart, Zap, Sparkles, Check } from 'lucide-react';
 import { Product } from '@/lib/types';
+import { useCart } from '@/context/CartContext';
 
 interface Props {
   product: Product;
 }
 
 export default function ProductDetailActions({ product }: Props) {
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+
   const handleAddToCart = () => {
-    alert(`Success! "${product.name}" added to cart. Ready for pickup at Shop 1 (Uttara) or Shop 2 (Dhanmondi).`);
+    addToCart({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      sku: product.sku,
+      price: Number(product.discount_price || product.selling_price || 0),
+      originalPrice: product.discount_price ? Number(product.selling_price) : undefined,
+      image: (product as any).primary_image || (product as any).images?.[0]?.image_url,
+      warranty: product.warranty_period,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2500);
   };
 
   return (
@@ -19,15 +34,31 @@ export default function ProductDetailActions({ product }: Props) {
       <div className="flex items-center gap-3">
         <button
           onClick={handleAddToCart}
-          className="flex-1 py-3.5 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-sky-600/20 hover:shadow-lg transition-all"
+          className={`flex-1 py-3.5 px-6 rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-[0.99] ${
+            added
+              ? 'bg-emerald-600 text-white shadow-emerald-600/20'
+              : 'bg-sky-600 hover:bg-sky-500 text-white shadow-sky-600/20 hover:shadow-lg'
+          }`}
         >
-          <ShoppingCart className="w-5 h-5" />
-          <span>Add to Cart</span>
+          {added ? <Check className="w-5 h-5 text-white" /> : <ShoppingCart className="w-5 h-5" />}
+          <span>{added ? 'Added to Cart!' : 'Add to Cart'}</span>
         </button>
 
         <Link
           href="/checkout"
-          className="flex-1 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2.5 border border-slate-900 dark:border-white shadow-sm transition-all"
+          onClick={() => {
+            addToCart({
+              id: product.id,
+              name: product.name,
+              slug: product.slug,
+              sku: product.sku,
+              price: Number(product.discount_price || product.selling_price || 0),
+              originalPrice: product.discount_price ? Number(product.selling_price) : undefined,
+              image: (product as any).primary_image || (product as any).images?.[0]?.image_url,
+              warranty: product.warranty_period,
+            });
+          }}
+          className="flex-1 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2.5 border border-slate-900 dark:border-white shadow-sm transition-all text-center"
         >
           <Zap className="w-5 h-5 text-amber-400" />
           <span>Buy Now</span>

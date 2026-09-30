@@ -27,7 +27,6 @@ import {
   LayoutTemplate,
   X,
   PanelLeftClose,
-  Menu
 } from 'lucide-react';
 import { useAdminSidebar } from './AdminSidebarContext';
 
@@ -70,7 +69,7 @@ export default function AdminSidebar() {
       {isMobileOpen && (
         <div
           onClick={() => setIsMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity"
           aria-hidden="true"
         />
       )}
@@ -80,17 +79,17 @@ export default function AdminSidebar() {
         className={`
           fixed lg:sticky top-0 z-50 lg:z-30 h-screen bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-slate-800
           flex flex-col justify-between overflow-y-auto transition-all duration-300 ease-in-out
-          ${/* Mobile sliding drawer */ ''}
-          ${isMobileOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
-          ${/* Desktop collapsible state */ ''}
+          ${/* Mobile Drawer Styling */ ''}
+          ${isMobileOpen ? 'translate-x-0 w-72 max-w-[85vw] shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+          ${/* Desktop Collapsible Width */ ''}
           ${isCollapsed ? 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:opacity-0 lg:pointer-events-none' : 'lg:w-64 lg:opacity-100'}
         `}
       >
         <div>
           {/* Brand Header & Toggle Controls */}
-          <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
-            <Link href="/admin" onClick={handleLinkClick} className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-xs shrink-0">
+          <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50/50 dark:bg-navy-950/40">
+            <Link href="/admin" onClick={handleLinkClick} className="flex items-center gap-2.5 min-w-0 group">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center font-bold text-white shadow-xs shrink-0 group-hover:scale-105 transition-transform">
                 C
               </div>
               <div className="min-w-0">
@@ -119,8 +118,8 @@ export default function AdminSidebar() {
                 className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
                 title="Hide / Collapse Menu"
               >
-                <span className="hidden lg:inline"><PanelLeftClose className="w-4 h-4" /></span>
-                <span className="lg:hidden"><X className="w-4 h-4" /></span>
+                <span className="hidden lg:inline" title="Collapse Sidebar"><PanelLeftClose className="w-4 h-4" /></span>
+                <span className="lg:hidden" title="Close Menu"><X className="w-4 h-4" /></span>
               </button>
             </div>
           </div>

@@ -19,9 +19,11 @@ import {
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import CategoryNav from '@/components/layout/CategoryNav';
 import { MEGA_CATEGORIES } from '@/lib/categories-data';
+import { useCart } from '@/context/CartContext';
 
 export default function Navbar() {
   const router = useRouter();
+  const { cartCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Array<{
     text: string;
@@ -35,7 +37,6 @@ export default function Navbar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMobileCat, setExpandedMobileCat] = useState<string | null>(null);
-  const [cartCount, setCartCount] = useState(1);
   const [session, setSession] = useState<{ authenticated: boolean; userType: 'staff' | 'customer' | null; user: any | null }>({
     authenticated: false,
     userType: null,
