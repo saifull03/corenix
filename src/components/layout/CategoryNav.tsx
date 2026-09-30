@@ -124,7 +124,7 @@ export default function CategoryNav() {
                                   const isCurrentSub = activeSubSlug === item.slug;
                                   const hasChildren = item.children && item.children.length > 0;
                                   return (
-                                    <div
+                              <div
                                       key={item.slug}
                                       onMouseEnter={() => handleSubHover(item)}
                                     >
@@ -138,18 +138,29 @@ export default function CategoryNav() {
                                         }`}
                                       >
                                         <span className="truncate pr-2">{item.name}</span>
-                                        {hasChildren && (
-                                          <svg
-                                            className={`w-2.5 h-2.5 flex-shrink-0 transition-transform ${
+                                        <span className="flex items-center gap-1.5 flex-shrink-0">
+                                          {hasChildren && item.children && (
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
                                               isCurrentSub
-                                                ? 'text-red-600 fill-red-600'
-                                                : 'text-slate-400 fill-slate-400'
-                                            }`}
-                                            viewBox="0 0 6 10"
-                                          >
-                                            <polygon points="0,0 6,5 0,10" />
-                                          </svg>
-                                        )}
+                                                ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
+                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                                            }`}>
+                                              {item.children.length}
+                                            </span>
+                                          )}
+                                          {hasChildren && (
+                                            <svg
+                                              className={`w-2.5 h-2.5 flex-shrink-0 transition-transform ${
+                                                isCurrentSub
+                                                  ? 'text-red-600 fill-red-600'
+                                                  : 'text-slate-400 fill-slate-400'
+                                              }`}
+                                              viewBox="0 0 6 10"
+                                            >
+                                              <polygon points="0,0 6,5 0,10" />
+                                            </svg>
+                                          )}
+                                        </span>
                                       </Link>
                                     </div>
                                   );
@@ -197,7 +208,7 @@ export default function CategoryNav() {
                                 const isCurrentSub = activeSubSlug === item.slug;
                                 const hasChildren = item.children && item.children.length > 0;
                                 return (
-                                  <div
+                              <div
                                     key={item.slug}
                                     onMouseEnter={() => handleSubHover(item)}
                                   >
@@ -211,18 +222,29 @@ export default function CategoryNav() {
                                       }`}
                                     >
                                       <span className="truncate pr-2">{item.name}</span>
-                                      {hasChildren && (
-                                        <svg
-                                          className={`w-2.5 h-2.5 flex-shrink-0 transition-transform ${
+                                      <span className="flex items-center gap-1.5 flex-shrink-0">
+                                        {hasChildren && item.children && (
+                                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
                                             isCurrentSub
-                                              ? 'text-red-600 fill-red-600'
-                                              : 'text-slate-400 fill-slate-400'
-                                          }`}
-                                          viewBox="0 0 6 10"
-                                        >
-                                          <polygon points="0,0 6,5 0,10" />
-                                        </svg>
-                                      )}
+                                              ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
+                                              : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                                          }`}>
+                                            {item.children.length}
+                                          </span>
+                                        )}
+                                        {hasChildren && (
+                                          <svg
+                                            className={`w-2.5 h-2.5 flex-shrink-0 ${
+                                              isCurrentSub
+                                                ? 'text-red-600 fill-red-600'
+                                                : 'text-slate-400 fill-slate-400'
+                                            }`}
+                                            viewBox="0 0 6 10"
+                                          >
+                                            <polygon points="0,0 6,5 0,10" />
+                                          </svg>
+                                        )}
+                                      </span>
                                     </Link>
                                   </div>
                                 );

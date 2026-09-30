@@ -98,7 +98,7 @@ The application will be live at [http://localhost:3000](http://localhost:3000).
 ```bash
 npm run dev
 ```
-
+.
 ---
 
 ## 🔐 Default Credentials

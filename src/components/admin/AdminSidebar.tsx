@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   Receipt,
   Truck,
+  Store,
   Wrench,
   DollarSign,
   BarChart3,
@@ -23,7 +24,9 @@ import {
   RefreshCw,
   FileText,
   Shield,
-  ExternalLink
+  ExternalLink,
+  LayoutTemplate,
+  Image
 } from 'lucide-react';
 
 const menuItems = [
@@ -38,11 +41,13 @@ const menuItems = [
   { label: 'Customer Orders', href: '/admin/orders', icon: ShoppingCart },
   { label: 'Point of Sale (POS)', href: '/admin/pos', icon: Receipt },
   { label: 'Purchases & Procurement', href: '/admin/purchases', icon: Truck },
+  { label: 'Other House & Lend', href: '/admin/purchases/other-house', icon: Store, indent: true },
   { label: 'Suppliers Management', href: '/admin/suppliers', icon: Building2 },
   { label: 'RMA & Service Center', href: '/admin/rma', icon: Wrench },
   { label: 'Expenses & Finance', href: '/admin/expenses', icon: DollarSign },
   { label: 'Reports & Profit Analysis', href: '/admin/reports', icon: BarChart3 },
   { label: 'SEO & Landing Pages', href: '/admin/seo', icon: Search },
+  { label: 'Banners & Slider', href: '/admin/banners', icon: LayoutTemplate },
   { label: 'Users & Staff RBAC', href: '/admin/users', icon: Users },
   { label: 'Operator Approvals', href: '/admin/approvals', icon: CheckSquare },
   { label: 'ERP Integration Sync', href: '/admin/erp', icon: RefreshCw },

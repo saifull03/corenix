@@ -78,7 +78,33 @@ export async function POST(req: NextRequest) {
       focus_keyword,
     } = body;
 
-    const finalSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    // 0. Auto-resolve slug uniqueness to prevent duplicate key errors
+    let baseSlug = (slug || name || 'product')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+    if (!baseSlug) baseSlug = 'product-' + Date.now().toString(36);
+    let finalSlug = baseSlug;
+    let slugCounter = 1;
+    while (true) {
+      const existing = await query<any[]>(`SELECT id FROM products WHERE slug = ? LIMIT 1`, [finalSlug]);
+      if (!existing || existing.length === 0) break;
+      slugCounter++;
+      finalSlug = `${baseSlug}-${slugCounter}`;
+    }
+
+    // 0b. Auto-resolve SKU uniqueness
+    let baseSku = (sku || `SKU-${Date.now().toString(36).toUpperCase()}`).trim();
+    let finalSku = baseSku;
+    let skuCounter = 1;
+    while (true) {
+      const existing = await query<any[]>(`SELECT id FROM products WHERE sku = ? LIMIT 1`, [finalSku]);
+      if (!existing || existing.length === 0) break;
+      skuCounter++;
+      finalSku = `${baseSku}-${skuCounter}`;
+    }
+
     const discountAmount = discount_price ? selling_price - discount_price : 0;
     const discountPercent = discount_price ? Math.round((discountAmount / selling_price) * 100) : 0;
 
@@ -93,7 +119,7 @@ export async function POST(req: NextRequest) {
       [
         name,
         finalSlug,
-        sku,
+        finalSku,
         model || null,
         brand_id,
         category_id,
@@ -125,10 +151,32 @@ export async function POST(req: NextRequest) {
     // 3. Dynamic Specifications
     if (specs && Array.isArray(specs)) {
       for (const s of specs) {
-        if (s.attribute_id && s.attribute_value) {
+        const val = s.attribute_value || s.value;
+        const label = s.custom_label || s.label || s.name || s.key;
+        if (!val || !val.toString().trim()) continue;
+
+        let attrId = s.attribute_id;
+        if (!attrId && label) {
+          const code = (s.key || label).toString().toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 48);
+          try {
+            const existing = await query<any[]>(`SELECT id FROM attributes WHERE code = ? LIMIT 1`, [code]);
+            if (existing && existing.length > 0) {
+              attrId = existing[0].id;
+            } else {
+              const res = await query<any>(`INSERT INTO attributes (name, code) VALUES (?, ?)`, [label, code]);
+              attrId = (res as any).insertId;
+            }
+          } catch {
+            // fallback if attributes insert has edge collision
+            const fallback = await query<any[]>(`SELECT id FROM attributes LIMIT 1`);
+            if (fallback && fallback.length > 0) attrId = fallback[0].id;
+          }
+        }
+
+        if (attrId) {
           await query(
-            `INSERT INTO product_specifications (product_id, attribute_id, attribute_value) VALUES (?, ?, ?)`,
-            [productId, s.attribute_id, s.attribute_value]
+            `INSERT INTO product_specifications (product_id, attribute_id, attribute_value, custom_label) VALUES (?, ?, ?, ?)`,
+            [productId, attrId, val.toString().trim(), label || null]
           );
         }
       }

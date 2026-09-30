@@ -213,3 +213,41 @@ export interface SeoLandingPage {
   og_image?: string;
   is_published: boolean;
 }
+
+export interface OtherHousePurchase {
+  id: number;
+  tracking_number: string;
+  house_name: string;
+  house_contact?: string;
+  house_phone?: string;
+  house_address?: string;
+  supplier_id?: number;
+  branch_id: number;
+  branch_name?: string;
+  branch_code?: string;
+  product_id?: number;
+  product_name: string;
+  product_brand?: string;
+  product_category?: string;
+  product_model?: string;
+  serial_number: string;
+  quantity: number;
+  unit_cost: number;
+  total_cost: number;
+  selling_price?: number;
+  warranty_period?: string;
+  is_lend: boolean;
+  payment_status: 'lend' | 'paid' | 'partially_paid';
+  paid_amount: number;
+  due_amount: number;
+  payment_method?: string;
+  payment_reference?: string;
+  paid_at?: string | null;
+  paid_by_name?: string;
+  payment_notes?: string;
+  status: 'in_stock' | 'sold' | 'returned_to_house' | 'cancelled';
+  notes?: string;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Receipt,
   Search,
@@ -11,7 +12,9 @@ import {
   Building2,
   CheckCircle2,
   User,
-  Plus
+  Plus,
+  Store,
+  Tag
 } from 'lucide-react';
 
 export default function PosPage() {
@@ -24,42 +27,68 @@ export default function PosPage() {
   const [paymentMethod, setPaymentMethod] = useState<'cash_pos' | 'card' | 'bkash'>('cash_pos');
   const [completedOrder, setCompletedOrder] = useState<any | null>(null);
 
-  // Load products
+  // Load products & Other House inventory items
   useEffect(() => {
-    fetch('/api/products')
-      .then(res => res.json())
-      .then(data => {
-        if (data.products) setProducts(data.products);
-      })
-      .catch(() => {});
+    Promise.all([
+      fetch('/api/products').then((res) => res.json()).catch(() => ({ products: [] })),
+      fetch('/api/admin/purchases/other-house').then((res) => res.json()).catch(() => ({ purchases: [] })),
+    ]).then(([prodData, ohData]) => {
+      const regularProds = (prodData.products || []).map((p: any) => ({
+        ...p,
+        is_other_house: false,
+      }));
+
+      const ohProds = (ohData.purchases || []).map((oh: any) => ({
+        id: `oh-${oh.id}`,
+        name: oh.product_name,
+        sku: oh.tracking_number,
+        serial_number: oh.serial_number,
+        house_name: oh.house_name,
+        selling_price: Number(oh.selling_price) || Number(oh.total_cost) * 1.08,
+        discount_price: null,
+        is_other_house: true,
+        warranty_period: oh.warranty_period,
+        payment_status: oh.payment_status,
+        primary_image: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=200&q=80',
+      }));
+
+      setProducts([...regularProds, ...ohProds]);
+    });
   }, []);
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.sku.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => {
+    const q = search.toLowerCase();
+    return (
+      p.name?.toLowerCase().includes(q) ||
+      p.sku?.toLowerCase().includes(q) ||
+      (p.serial_number && p.serial_number.toLowerCase().includes(q)) ||
+      (p.house_name && p.house_name.toLowerCase().includes(q))
+    );
+  });
 
   const handleAddToCart = (product: any) => {
-    const existing = cart.find(item => item.id === product.id);
+    const existing = cart.find((item) => item.id === product.id);
     if (existing) {
-      setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+      setCart(cart.map((item) => (item.id === product.id ? { ...item, qty: item.qty + 1 } : item)));
     } else {
       setCart([...cart, { ...product, qty: 1 }]);
     }
   };
 
-  const handleUpdateQty = (id: number, delta: number) => {
-    setCart(cart.map(item => {
-      if (item.id === id) {
-        const newQty = Math.max(1, item.qty + delta);
-        return { ...item, qty: newQty };
-      }
-      return item;
-    }));
+  const handleUpdateQty = (id: any, delta: number) => {
+    setCart(
+      cart.map((item) => {
+        if (item.id === id) {
+          const newQty = Math.max(1, item.qty + delta);
+          return { ...item, qty: newQty };
+        }
+        return item;
+      })
+    );
   };
 
-  const handleRemove = (id: number) => {
-    setCart(cart.filter(item => item.id !== id));
+  const handleRemove = (id: any) => {
+    setCart(cart.filter((item) => item.id !== id));
   };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.discount_price || item.selling_price) * item.qty, 0);
@@ -96,22 +125,32 @@ export default function PosPage() {
           </div>
           <div>
             <h1 className="text-lg font-black text-white">CORENIX Retail POS Terminal</h1>
-            <span className="text-xs text-slate-400">Rapid Barcode & Counter Sales</span>
+            <span className="text-xs text-slate-400">Rapid Barcode, Serial & Counter Sales</span>
           </div>
         </div>
 
-        {/* Branch Context Selector */}
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-brand-400" />
-          <span className="text-xs text-slate-300 font-semibold">Active Counter:</span>
-          <select
-            value={branch}
-            onChange={(e) => setBranch(e.target.value as any)}
-            className="bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-700 outline-none"
+        {/* Action Controls & Counter Context */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <Link
+            href="/admin/purchases?tab=other-house"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 text-xs font-bold transition-colors"
           >
-            <option value="SHOP-1">Shop 1 (Uttara Counter)</option>
-            <option value="SHOP-2">Shop 2 (Dhanmondi Counter)</option>
-          </select>
+            <Store className="w-3.5 h-3.5" />
+            <span>+ Source from Other House (Lend)</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-brand-400" />
+            <span className="text-xs text-slate-300 font-semibold">Active Counter:</span>
+            <select
+              value={branch}
+              onChange={(e) => setBranch(e.target.value as any)}
+              className="bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-700 outline-none"
+            >
+              <option value="SHOP-1">Shop 1 (Uttara Counter)</option>
+              <option value="SHOP-2">Shop 2 (Dhanmondi Counter)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -131,7 +170,9 @@ export default function PosPage() {
             </div>
             <div className="flex justify-between">
               <span>Customer:</span>
-              <span className="text-white">{completedOrder.customerName} ({completedOrder.customerPhone})</span>
+              <span className="text-white">
+                {completedOrder.customerName} ({completedOrder.customerPhone})
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Payment:</span>
@@ -141,11 +182,20 @@ export default function PosPage() {
 
           <div className="border-t border-slate-800 pt-3 space-y-2">
             {completedOrder.items.map((it: any) => (
-              <div key={it.id} className="flex justify-between">
-                <span>{it.name} (x{it.qty})</span>
-                <span className="font-mono font-bold text-white">
-                  ৳{((it.discount_price || it.selling_price) * it.qty).toLocaleString()}
-                </span>
+              <div key={it.id} className="space-y-0.5">
+                <div className="flex justify-between">
+                  <span className="font-medium text-slate-200">
+                    {it.name} (x{it.qty})
+                  </span>
+                  <span className="font-mono font-bold text-white">
+                    ৳{((it.discount_price || it.selling_price) * it.qty).toLocaleString()}
+                  </span>
+                </div>
+                {it.serial_number && (
+                  <span className="font-mono text-[10px] text-cyan-400 block">
+                    SN: {it.serial_number} {it.house_name ? `• Sourced: ${it.house_name}` : ''}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -182,7 +232,7 @@ export default function PosPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Scan Barcode or Search by Model / SKU / Name..."
+                placeholder="Scan Barcode or Search by Serial Number (SN), Model, or SKU..."
                 className="w-full bg-navy-900 border border-slate-700 rounded-xl px-4 py-3 pl-11 text-xs text-white outline-none focus:border-brand-500"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -194,19 +244,38 @@ export default function PosPage() {
                 <div
                   key={p.id}
                   onClick={() => handleAddToCart(p)}
-                  className="p-3 rounded-xl bg-navy-900 border border-slate-800 hover:border-brand-500/60 cursor-pointer flex flex-col justify-between transition-colors group"
+                  className={`p-3 rounded-xl bg-navy-900 border transition-all cursor-pointer flex flex-col justify-between group ${
+                    p.is_other_house
+                      ? 'border-amber-500/40 hover:border-amber-400'
+                      : 'border-slate-800 hover:border-brand-500/60'
+                  }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={p.primary_image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=200&q=80'}
+                    src={
+                      p.primary_image ||
+                      'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=200&q=80'
+                    }
                     alt={p.name}
                     className="w-full h-24 object-contain mb-2"
                   />
                   <div>
+                    {p.is_other_house && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-1">
+                        <Store className="w-2.5 h-2.5" />
+                        <span>Other House</span>
+                      </span>
+                    )}
                     <h4 className="text-xs font-semibold text-slate-200 line-clamp-2 group-hover:text-brand-300">
                       {p.name}
                     </h4>
-                    <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">{p.sku}</span>
+                    {p.serial_number ? (
+                      <span className="text-[10px] text-cyan-400 font-mono mt-0.5 block truncate">
+                        SN: {p.serial_number}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">{p.sku}</span>
+                    )}
                   </div>
                   <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
                     <span className="text-xs font-black text-brand-400">
@@ -248,66 +317,94 @@ export default function PosPage() {
                   />
                 </div>
 
-                {/* Ticket Items */}
-                <div className="space-y-2 max-h-72 overflow-y-auto divide-y divide-slate-800/60">
-                  {cart.map((item) => (
-                    <div key={item.id} className="pt-2 flex items-center justify-between text-xs">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <span className="font-bold text-white block truncate">{item.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          ৳{(item.discount_price || item.selling_price).toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center border border-slate-700 rounded bg-slate-800">
-                          <button onClick={() => handleUpdateQty(item.id, -1)} className="px-2 py-0.5 text-slate-300">-</button>
-                          <span className="px-2 text-white font-bold">{item.qty}</span>
-                          <button onClick={() => handleUpdateQty(item.id, 1)} className="px-2 py-0.5 text-slate-300">+</button>
-                        </div>
-                        <span className="font-bold font-mono text-white">
-                          ৳{((item.discount_price || item.selling_price) * item.qty).toLocaleString()}
-                        </span>
-                        <button onClick={() => handleRemove(item.id)} className="text-slate-500 hover:text-rose-400">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                {/* Cart Items List */}
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {cart.length === 0 ? (
+                    <div className="py-12 text-center text-slate-500 text-xs">
+                      No items in ticket. Click products or search by serial number to add.
                     </div>
-                  ))}
-                  {cart.length === 0 && (
-                    <p className="text-center text-xs text-slate-500 py-10">Scan barcode or click items to add to ticket.</p>
+                  ) : (
+                    cart.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between text-xs gap-2"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-semibold text-white truncate">{item.name}</h5>
+                          {item.serial_number && (
+                            <span className="text-[10px] text-cyan-400 font-mono block">
+                              SN: {item.serial_number}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-400 block font-mono">
+                            ৳{(item.discount_price || item.selling_price).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center bg-slate-800 rounded-lg border border-slate-700">
+                            <button
+                              onClick={() => handleUpdateQty(item.id, -1)}
+                              className="px-2 py-0.5 text-slate-400 hover:text-white font-bold"
+                            >
+                              -
+                            </button>
+                            <span className="px-2 py-0.5 font-bold text-white text-xs">{item.qty}</span>
+                            <button
+                              onClick={() => handleUpdateQty(item.id, 1)}
+                              className="px-2 py-0.5 text-slate-400 hover:text-white font-bold"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => handleRemove(item.id)}
+                            className="p-1 rounded-md text-rose-400 hover:bg-rose-950/50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
 
-              {/* Bottom Actions */}
+              {/* Checkout Controls */}
               <div className="border-t border-slate-800 pt-4 space-y-3">
-                <div className="flex items-center justify-between text-base font-bold text-white">
-                  <span>Grand Total:</span>
-                  <span className="text-2xl font-black text-brand-400">৳{subtotal.toLocaleString()}</span>
+                <div className="flex justify-between items-center text-sm font-bold">
+                  <span className="text-slate-400">Total Payable:</span>
+                  <span className="text-lg font-black text-brand-400">৳{subtotal.toLocaleString()}</span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <button
                     onClick={() => setPaymentMethod('cash_pos')}
-                    className={`py-2 rounded-lg font-bold border ${
-                      paymentMethod === 'cash_pos' ? 'bg-emerald-950 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+                    className={`py-2 rounded-xl font-bold border transition-colors ${
+                      paymentMethod === 'cash_pos'
+                        ? 'bg-brand-500 text-navy-950 border-brand-500'
+                        : 'bg-slate-800 text-slate-300 border-slate-700'
                     }`}
                   >
                     Cash
                   </button>
                   <button
                     onClick={() => setPaymentMethod('card')}
-                    className={`py-2 rounded-lg font-bold border ${
-                      paymentMethod === 'card' ? 'bg-blue-950 border-blue-500 text-blue-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+                    className={`py-2 rounded-xl font-bold border transition-colors ${
+                      paymentMethod === 'card'
+                        ? 'bg-brand-500 text-navy-950 border-brand-500'
+                        : 'bg-slate-800 text-slate-300 border-slate-700'
                     }`}
                   >
-                    Card POS
+                    Card
                   </button>
                   <button
                     onClick={() => setPaymentMethod('bkash')}
-                    className={`py-2 rounded-lg font-bold border ${
-                      paymentMethod === 'bkash' ? 'bg-pink-950 border-pink-500 text-pink-300' : 'bg-slate-800 border-slate-700 text-slate-300'
+                    className={`py-2 rounded-xl font-bold border transition-colors ${
+                      paymentMethod === 'bkash'
+                        ? 'bg-brand-500 text-navy-950 border-brand-500'
+                        : 'bg-slate-800 text-slate-300 border-slate-700'
                     }`}
                   >
                     bKash
@@ -317,9 +414,10 @@ export default function PosPage() {
                 <button
                   onClick={handleCheckout}
                   disabled={cart.length === 0}
-                  className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-black text-sm shadow disabled:opacity-40"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-navy-950 font-black text-sm shadow-lg shadow-emerald-500/20 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
-                  Complete Sale & Print Receipt
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Complete Counter Sale</span>
                 </button>
               </div>
             </div>

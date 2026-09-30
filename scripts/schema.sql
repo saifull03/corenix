@@ -765,4 +765,46 @@ CREATE TABLE IF NOT EXISTS `communication_logs` (
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 31. Other House Purchases & Inter-Store Lend (অন্য হাউস ক্রয় / হাওলাত)
+CREATE TABLE IF NOT EXISTS `other_house_purchases` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `tracking_number` VARCHAR(50) NOT NULL UNIQUE,
+  `house_name` VARCHAR(150) NOT NULL,
+  `house_contact` VARCHAR(100) NULL,
+  `house_phone` VARCHAR(50) NULL,
+  `house_address` TEXT NULL,
+  `supplier_id` INT NULL,
+  `branch_id` INT NOT NULL,
+  `product_id` INT NULL,
+  `product_name` VARCHAR(255) NOT NULL,
+  `product_brand` VARCHAR(100) NULL,
+  `product_category` VARCHAR(100) NULL,
+  `product_model` VARCHAR(100) NULL,
+  `serial_number` VARCHAR(255) NOT NULL,
+  `quantity` INT NOT NULL DEFAULT 1,
+  `unit_cost` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `total_cost` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `selling_price` DECIMAL(12,2) NULL DEFAULT 0.00,
+  `warranty_period` VARCHAR(100) NULL DEFAULT '1 Year Official Warranty',
+  `is_lend` BOOLEAN NOT NULL DEFAULT TRUE,
+  `payment_status` ENUM('lend', 'paid', 'partially_paid') NOT NULL DEFAULT 'lend',
+  `paid_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `due_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `payment_method` VARCHAR(50) NULL,
+  `payment_reference` VARCHAR(100) NULL,
+  `paid_at` DATETIME NULL,
+  `paid_by_name` VARCHAR(100) NULL,
+  `payment_notes` TEXT NULL,
+  `status` ENUM('in_stock', 'sold', 'returned_to_house', 'cancelled') NOT NULL DEFAULT 'in_stock',
+  `notes` TEXT NULL,
+  `created_by` INT NOT NULL DEFAULT 1,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`branch_id`) REFERENCES `branches`(`id`),
+  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE SET NULL,
+  INDEX `idx_serial` (`serial_number`),
+  INDEX `idx_payment_status` (`payment_status`),
+  INDEX `idx_house_name` (`house_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
