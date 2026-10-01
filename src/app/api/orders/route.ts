@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { getCurrentCustomer } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,21 +23,42 @@ export async function POST(req: NextRequest) {
     const totalAmount = subtotal + shippingFee - discountAmount;
     const orderNumber = `CRX-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // 1. Create or find customer
+    // 1. Create or find customer (check logged in session first, then email/phone)
     let customerId = null;
-    if (customerEmail) {
+    try {
+      const authCustomer = await getCurrentCustomer();
+      if (authCustomer?.id) {
+        customerId = authCustomer.id;
+      }
+    } catch (e) {}
+
+    if (!customerId && (customerEmail || customerPhone)) {
       const existingCustomer = await queryOne<any>(
-        `SELECT id FROM customers WHERE email = ?`,
-        [customerEmail]
+        `SELECT id FROM customers WHERE (LOWER(email) = LOWER(?) AND ? != '') OR (phone = ? AND ? != '') LIMIT 1`,
+        [customerEmail || '', customerEmail || '', customerPhone || '', customerPhone || '']
       );
       if (existingCustomer) {
         customerId = existingCustomer.id;
       } else {
-        const custRes = await query<any>(
-          `INSERT INTO customers (name, email, phone, password_hash) VALUES (?, ?, ?, ?)`,
-          [customerName, customerEmail, customerPhone, '$2a$10$abcdefghijklmnopqrstuvwxyz']
-        );
-        customerId = (custRes as any).insertId;
+        try {
+          const custRes = await query<any>(
+            `INSERT INTO customers (name, email, phone, password_hash) VALUES (?, ?, ?, ?)`,
+            [
+              customerName || 'Customer',
+              customerEmail || `customer_${Date.now()}@corenix.com`,
+              customerPhone || `017${Math.floor(10000000 + Math.random() * 90000000)}`,
+              '$2a$10$abcdefghijklmnopqrstuvwxyz'
+            ]
+          );
+          customerId = (custRes as any).insertId;
+        } catch (err) {
+          // If collision, try finding by phone or email again
+          const retryCustomer = await queryOne<any>(
+            `SELECT id FROM customers WHERE email = ? OR phone = ? LIMIT 1`,
+            [customerEmail || '', customerPhone || '']
+          );
+          if (retryCustomer) customerId = retryCustomer.id;
+        }
       }
     }
 
@@ -60,7 +82,13 @@ export async function POST(req: NextRequest) {
         totalAmount,
         subtotal * 0.82, // Estimated COGS
         subtotal * 0.18, // Estimated Gross Profit
-        JSON.stringify({ address: shippingAddress, deliveryType, phone: customerPhone, name: customerName }),
+        JSON.stringify({
+          address: shippingAddress,
+          deliveryType,
+          phone: customerPhone,
+          name: customerName,
+          email: customerEmail,
+        }),
         `Online order placed via CORENIX portal. Delivery: ${deliveryType}`
       ]
     );

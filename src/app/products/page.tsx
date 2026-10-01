@@ -27,8 +27,15 @@ export default async function ProductsCataloguePage({ searchParams }: Props) {
   const params: any[] = [];
 
   if (categoryFilter) {
-    conditions.push('(c.slug = ? OR c.parent_id IN (SELECT id FROM categories WHERE slug = ?))');
-    params.push(categoryFilter, categoryFilter);
+    conditions.push(`p.category_id IN (
+      WITH RECURSIVE cat_tree AS (
+        SELECT id FROM categories WHERE slug = ?
+        UNION ALL
+        SELECT c.id FROM categories c JOIN cat_tree ct ON c.parent_id = ct.id
+      )
+      SELECT id FROM cat_tree
+    )`);
+    params.push(categoryFilter);
   }
 
   if (brandFilter) {
@@ -45,13 +52,13 @@ export default async function ProductsCataloguePage({ searchParams }: Props) {
     `SELECT p.*,
             b.name as brand_name, b.slug as brand_slug,
             c.name as category_name, c.slug as category_slug,
-            pi.image_url as primary_image,
+            (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as primary_image,
             (SELECT SUM(quantity - reserved_qty) FROM inventory WHERE product_id = p.id) as total_stock
      FROM products p
      JOIN brands b ON p.brand_id = b.id
      JOIN categories c ON p.category_id = c.id
-     LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
      WHERE ${conditions.join(' AND ')}
+     GROUP BY p.id
      ORDER BY ${orderBy}`,
     params
   );
@@ -191,8 +198,8 @@ export default async function ProductsCataloguePage({ searchParams }: Props) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((p) => (
-                <ProductCard key={p.id} product={p} />
+              {products.map((p, idx) => (
+                <ProductCard key={`all-prod-${p.id}-${idx}`} product={p} />
               ))}
             </div>
           </div>

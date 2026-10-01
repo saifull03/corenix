@@ -48,12 +48,15 @@ export async function POST(req: NextRequest) {
       isActive = true,
     } = body;
 
-    if (!title || !imageUrl || !linkUrl) {
+    if (!imageUrl) {
       return NextResponse.json(
-        { success: false, error: 'Title, Image URL, and Link URL are required.' },
+        { success: false, error: 'Banner Image is required.' },
         { status: 400 }
       );
     }
+
+    const safeTitle = title?.trim() || (position === 'hero_collage' ? 'Collage Card' : 'Untitled Banner');
+    const safeLinkUrl = linkUrl?.trim() || '/products';
 
     const result = await query<any>(
       `INSERT INTO banners (
@@ -62,15 +65,15 @@ export async function POST(req: NextRequest) {
         position, order_index, is_active
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        title.trim(),
-        subtitle.trim() || null,
-        description.trim() || null,
+        safeTitle,
+        subtitle?.trim() || null,
+        description?.trim() || null,
         imageUrl.trim(),
-        linkUrl.trim(),
-        buttonText.trim() || 'Shop Now',
-        cta2Text.trim() || null,
-        cta2Link.trim() || null,
-        badgeText.trim() || null,
+        safeLinkUrl,
+        buttonText?.trim() || 'Shop Now',
+        cta2Text?.trim() || null,
+        cta2Link?.trim() || null,
+        badgeText?.trim() || null,
         textColor || 'white',
         position,
         orderIndex,

@@ -251,3 +251,19 @@ export interface OtherHousePurchase {
   created_at: string;
   updated_at: string;
 }
+
+export interface PartnerHouse {
+  id?: number;
+  name: string;
+  contact_person?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  total_transactions?: number;
+  total_purchase_amount?: number;
+  total_paid_amount?: number;
+  total_lend_due?: number;
+  current_due?: number;
+  created_at?: string;
+  updated_at?: string;
+}

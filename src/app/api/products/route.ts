@@ -14,8 +14,15 @@ export async function GET(req: NextRequest) {
     const params: any[] = [];
 
     if (category) {
-      conditions.push('(c.slug = ? OR c.parent_id IN (SELECT id FROM categories WHERE slug = ?))');
-      params.push(category, category);
+      conditions.push(`p.category_id IN (
+        WITH RECURSIVE cat_tree AS (
+          SELECT id FROM categories WHERE slug = ?
+          UNION ALL
+          SELECT c.id FROM categories c JOIN cat_tree ct ON c.parent_id = ct.id
+        )
+        SELECT id FROM cat_tree
+      )`);
+      params.push(category);
     }
     if (brand) {
       conditions.push('b.slug = ?');

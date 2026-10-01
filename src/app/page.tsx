@@ -24,9 +24,12 @@ import {
 export const revalidate = 60; // ISR cache revalidation
 
 export default async function HomePage() {
-  // Fetch hero banners for slider
+  // Fetch hero banners for left slider & right collage
   const heroBanners = await query<any[]>(
     `SELECT * FROM banners WHERE position = 'hero' AND is_active = 1 ORDER BY order_index ASC, id ASC`
+  );
+  const collageBanners = await query<any[]>(
+    `SELECT * FROM banners WHERE position = 'hero_collage' AND is_active = 1 ORDER BY order_index ASC, id ASC`
   );
 
   const categories = await query<Category[]>(
@@ -36,18 +39,18 @@ export default async function HomePage() {
      ORDER BY order_index ASC LIMIT 8`
   );
 
-  // Fetch featured products
+  // Fetch featured products (Deduplicated with subquery image)
   const featuredProducts = await query<Product[]>(
     `SELECT p.*,
             b.name as brand_name, b.slug as brand_slug,
             c.name as category_name, c.slug as category_slug,
-            pi.image_url as primary_image,
+            (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as primary_image,
             (SELECT SUM(quantity - reserved_qty) FROM inventory WHERE product_id = p.id) as total_stock
      FROM products p
      JOIN brands b ON p.brand_id = b.id
      JOIN categories c ON p.category_id = c.id
-     LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
      WHERE p.status = 'published'
+     GROUP BY p.id
      ORDER BY p.is_featured DESC, p.created_at DESC
      LIMIT 8`
   );
@@ -78,9 +81,12 @@ export default async function HomePage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SLIDER SECTION */}
+        {/* HERO SLIDER & 3-COLLAGE SECTION */}
         <section className="w-full border-b border-slate-200/80 dark:border-slate-800/80">
-          <HeroSlider initialBanners={heroBanners ?? []} />
+          <HeroSlider
+            initialBanners={heroBanners ?? []}
+            initialCollageBanners={collageBanners ?? []}
+          />
         </section>
 
         {/* TRUST BADGES STRIP */}
@@ -167,8 +173,8 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts.map((prod) => (
-                <ProductCard key={prod.id} product={prod} />
+              {featuredProducts.map((prod, idx) => (
+                <ProductCard key={`feat-prod-${prod.id}-${idx}`} product={prod} />
               ))}
             </div>
           </div>

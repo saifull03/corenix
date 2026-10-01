@@ -25,7 +25,18 @@ import {
   ExternalLink,
   ChevronRight,
   MapPin,
-  Clock
+  Clock,
+  Printer,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Tag,
+  ShoppingBag,
+  Copy,
+  Check,
+  Truck,
+  Search,
+  X
 } from 'lucide-react';
 
 interface AuthSession {
@@ -68,6 +79,10 @@ export default function AccountPage() {
     addresses: any[];
   }>({ orders: [], rmaCases: [], addresses: [] });
   const [customerTab, setCustomerTab] = useState<'overview' | 'orders' | 'rma'>('overview');
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<any | null>(null);
+  const [orderFilter, setOrderFilter] = useState<'all' | 'active' | 'delivered' | 'cancelled'>('all');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [copiedOrderNumber, setCopiedOrderNumber] = useState<string | null>(null);
 
   // Fetch session on mount
   useEffect(() => {
@@ -382,9 +397,25 @@ export default function AccountPage() {
                     {session.user?.name?.charAt(0) || 'C'}
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{session.user?.name}</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{session.user?.email} • {session.user?.phone}</p>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{session.user?.name}</h2>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950 dark:text-cyan-300 dark:border-cyan-800">
+                        <span>Customer ID: #CRX-C-{String(session.user?.id || 1).padStart(4, '0')}</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard?.writeText(`CRX-C-${String(session.user?.id || 1).padStart(4, '0')}`);
+                            setCopiedOrderNumber('cust-id');
+                            setTimeout(() => setCopiedOrderNumber(null), 2000);
+                          }}
+                          className="hover:text-sky-900 dark:hover:text-white cursor-pointer ml-0.5"
+                          title="Copy Customer ID"
+                        >
+                          {copiedOrderNumber === 'cust-id' ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{session.user?.email} • {session.user?.phone}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800">
                         <Gift className="w-3.5 h-3.5 text-amber-500" />
                         <span>{session.user?.reward_points || 0} Reward Points</span>
@@ -451,103 +482,500 @@ export default function AccountPage() {
 
               {/* Tab 1: Overview */}
               {customerTab === 'overview' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-                      <span className="text-xs font-bold uppercase tracking-wider">Total Orders</span>
-                      <Package className="w-5 h-5 text-sky-600 dark:text-cyan-400" />
+                <div className="space-y-6">
+                  {/* Summary Metric Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider">Total Orders</span>
+                        <Package className="w-5 h-5 text-sky-600 dark:text-cyan-400" />
+                      </div>
+                      <div className="text-3xl font-black text-slate-900 dark:text-white">
+                        {accountData.orders.length}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {accountData.orders.filter(o => (o.order_status || '').toLowerCase() === 'delivered').length} delivered successfully
+                      </p>
                     </div>
-                    <div className="text-3xl font-black text-slate-900 dark:text-white">
-                      {accountData.orders.length}
+
+                    <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider">Active RMA Claims</span>
+                        <Wrench className="w-5 h-5 text-amber-500" />
+                      </div>
+                      <div className="text-3xl font-black text-slate-900 dark:text-white">
+                        {accountData.rmaCases.length}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Protected under official manufacturer warranty
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {accountData.orders.filter(o => o.order_status === 'delivered').length} delivered successfully
-                    </p>
+
+                    <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                      <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider">Reward Balance</span>
+                        <Gift className="w-5 h-5 text-purple-500" />
+                      </div>
+                      <div className="text-3xl font-black text-purple-600 dark:text-purple-400">
+                        {session.user?.reward_points || 0} pts
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Equivalent to ৳{session.user?.reward_points || 0} discount on your next checkout
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-                      <span className="text-xs font-bold uppercase tracking-wider">Active RMA Claims</span>
-                      <Wrench className="w-5 h-5 text-amber-500" />
+                  {/* Recent Orders & Live Status Quick Preview */}
+                  <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Package className="w-5 h-5 text-sky-600 dark:text-cyan-400" />
+                          <span>Recent Orders & Live Status</span>
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Live tracking for your purchases</p>
+                      </div>
+                      <button
+                        onClick={() => setCustomerTab('orders')}
+                        className="px-3.5 py-1.5 rounded-xl bg-sky-50 dark:bg-navy-800 text-sky-600 dark:text-cyan-400 hover:bg-sky-100 dark:hover:bg-navy-700 text-xs font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <span>View All Orders ({accountData.orders.length})</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <div className="text-3xl font-black text-slate-900 dark:text-white">
-                      {accountData.rmaCases.length}
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Protected under official manufacturer warranty
-                    </p>
-                  </div>
 
-                  <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-                      <span className="text-xs font-bold uppercase tracking-wider">Reward Balance</span>
-                      <Gift className="w-5 h-5 text-purple-500" />
-                    </div>
-                    <div className="text-3xl font-black text-purple-600 dark:text-purple-400">
-                      {session.user?.reward_points || 0} pts
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Equivalent to ৳{session.user?.reward_points || 0} discount on your next checkout
-                    </p>
+                    {accountData.orders.length === 0 ? (
+                      <div className="p-8 text-center text-slate-500 dark:text-slate-400 space-y-3">
+                        <Package className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600" />
+                        <p className="text-xs font-medium">You haven&apos;t placed any orders yet.</p>
+                        <Link
+                          href="/products"
+                          className="inline-block px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-sm transition-colors"
+                        >
+                          Start Shopping
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                        {accountData.orders.slice(0, 2).map((ord) => (
+                          <div key={ord.id} className="p-4 sm:p-6 space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
+                                    {ord.order_number}
+                                  </span>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 dark:bg-navy-950 text-sky-700 dark:text-cyan-300 border border-slate-200 dark:border-slate-800">
+                                    Cust ID: #CRX-C-{String(ord.customer_id || session.user?.id || 1).padStart(4, '0')}
+                                  </span>
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                    (ord.order_status || '').toLowerCase() === 'delivered' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' :
+                                    (ord.order_status || '').toLowerCase() === 'shipped' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-cyan-300 border border-sky-200 dark:border-cyan-800' :
+                                    (ord.order_status || '').toLowerCase() === 'processing' ? 'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800' :
+                                    'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                  }`}>
+                                    Status: {ord.order_status}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                                    ord.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                                    'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                  }`}>
+                                    {ord.payment_method?.toUpperCase()} • {ord.payment_status?.toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                  Placed on {new Date(ord.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} • {ord.branch_name || 'CORENIX Main'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => setSelectedInvoiceOrder(ord)}
+                                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-cyan-400" />
+                                  <span>Invoice</span>
+                                </button>
+                                <span className="text-base font-black text-slate-900 dark:text-white">
+                                  ৳{Number(ord.total_amount).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* 5-Step Order Progress Tracker */}
+                            <div className="py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-200/70 dark:border-slate-800 space-y-1.5">
+                              <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                                <span className="flex items-center gap-1.5 uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                  <Truck className="w-3.5 h-3.5 text-sky-600 dark:text-cyan-400" />
+                                  <span>Live Delivery Tracker</span>
+                                </span>
+                                <span className="text-sky-600 dark:text-cyan-400 font-bold uppercase">
+                                  {ord.order_status?.toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-5 gap-1.5 items-center">
+                                {[
+                                  { num: 1, label: 'Placed' },
+                                  { num: 2, label: 'Confirmed' },
+                                  { num: 3, label: 'Processing' },
+                                  { num: 4, label: 'In Transit' },
+                                  { num: 5, label: 'Delivered' },
+                                ].map((s) => {
+                                  const norm = (ord.order_status || '').toLowerCase();
+                                  let curr = 1;
+                                  if (norm === 'confirmed') curr = 2;
+                                  else if (norm === 'processing') curr = 3;
+                                  else if (norm === 'shipped') curr = 4;
+                                  else if (norm === 'delivered') curr = 5;
+                                  const isDone = curr >= s.num;
+                                  const isCurrent = curr === s.num;
+                                  return (
+                                    <div key={s.num} className="space-y-1 text-center">
+                                      <div
+                                        className={`h-1.5 rounded-full transition-all ${
+                                          isDone ? 'bg-emerald-500 shadow-xs' : 'bg-slate-200 dark:bg-slate-800'
+                                        }`}
+                                      />
+                                      <div className={`text-[10px] truncate ${isCurrent ? 'font-black text-sky-600 dark:text-cyan-400' : isDone ? 'font-semibold text-slate-700 dark:text-slate-300' : 'text-slate-400'}`}>
+                                        {s.label}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Tab 2: Orders List */}
               {customerTab === 'orders' && (
-                <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                  <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white">Your Orders</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Track shipments and purchase invoices</p>
+                <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden space-y-4">
+                  {/* Top Header & Search / Filters */}
+                  <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="font-bold text-slate-900 dark:text-white text-base">Your Purchase History</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Track real-time shipment status, serial numbers, and download official invoices</p>
+                      </div>
+
+                      {/* Search Bar */}
+                      <div className="relative w-full sm:w-64">
+                        <input
+                          type="text"
+                          value={orderSearch}
+                          onChange={(e) => setOrderSearch(e.target.value)}
+                          placeholder="Search Order # or Product..."
+                          className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 pl-9 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-sky-500"
+                        />
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                      </div>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                      {[
+                        { key: 'all', label: `All Orders (${accountData.orders.length})` },
+                        { key: 'active', label: `In-Progress (${accountData.orders.filter(o => !['delivered', 'cancelled', 'returned'].includes((o.order_status || '').toLowerCase())).length})` },
+                        { key: 'delivered', label: `Delivered (${accountData.orders.filter(o => (o.order_status || '').toLowerCase() === 'delivered').length})` },
+                        { key: 'cancelled', label: `Cancelled (${accountData.orders.filter(o => ['cancelled', 'returned'].includes((o.order_status || '').toLowerCase())).length})` },
+                      ].map((tab) => (
+                        <button
+                          key={tab.key}
+                          onClick={() => setOrderFilter(tab.key as any)}
+                          className={`px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all ${
+                            orderFilter === tab.key
+                              ? 'bg-sky-600 text-white shadow-xs'
+                              : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  {accountData.orders.length === 0 ? (
-                    <div className="p-12 text-center text-slate-500 dark:text-slate-400">
-                      <Package className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-                      <p className="font-semibold">No orders found</p>
-                      <p className="text-xs mt-1">Explore our technology catalogue and place your first order.</p>
-                      <Link
-                        href="/products"
-                        className="inline-block mt-4 px-4 py-2 rounded-xl bg-sky-600 text-white text-xs font-bold shadow-sm"
-                      >
-                        Explore Catalogue
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                      {accountData.orders.map((ord) => (
-                        <div key={ord.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 dark:text-white">{ord.order_number}</span>
-                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                                ord.order_status === 'delivered' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' :
-                                ord.order_status === 'shipped' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-cyan-300' :
-                                'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                              }`}>
-                                {ord.order_status}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              <span>Placed on {new Date(ord.created_at).toLocaleDateString()}</span>
-                              <span>•</span>
-                              <span>{ord.branch_name || 'CORENIX Fulfillment'}</span>
-                              <span>•</span>
-                              <span className="capitalize">{ord.payment_method} ({ord.payment_status})</span>
-                            </div>
-                          </div>
-                          <div className="text-right sm:text-right">
-                            <div className="text-lg font-black text-slate-900 dark:text-white">
-                              ৳{Number(ord.total_amount).toLocaleString()}
-                            </div>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">{ord.item_count || 1} item(s)</span>
-                          </div>
+                  {/* Orders Listing */}
+                  {(() => {
+                    const filtered = accountData.orders.filter((ord) => {
+                      const norm = (ord.order_status || '').toLowerCase();
+                      if (orderFilter === 'active' && ['delivered', 'cancelled', 'returned'].includes(norm)) return false;
+                      if (orderFilter === 'delivered' && norm !== 'delivered') return false;
+                      if (orderFilter === 'cancelled' && !['cancelled', 'returned'].includes(norm)) return false;
+
+                      if (orderSearch.trim()) {
+                        const q = orderSearch.toLowerCase();
+                        const matchNum = (ord.order_number || '').toLowerCase().includes(q);
+                        const matchCustId = ord.customer_id && (`crx-c-${String(ord.customer_id).padStart(4, '0')}`.includes(q) || String(ord.customer_id).includes(q));
+                        const matchItem = ord.items?.some((i: any) =>
+                          (i.product_name || '').toLowerCase().includes(q) || (i.sku || '').toLowerCase().includes(q)
+                        );
+                        return matchNum || matchCustId || matchItem;
+                      }
+                      return true;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="p-12 text-center text-slate-500 dark:text-slate-400">
+                          <Package className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+                          <p className="font-semibold">No matching orders found</p>
+                          <p className="text-xs mt-1">Explore our technology catalogue or place an order to get started.</p>
+                          <Link
+                            href="/products"
+                            className="inline-block mt-4 px-4 py-2 rounded-xl bg-sky-600 text-white text-xs font-bold shadow-sm"
+                          >
+                            Explore Catalogue
+                          </Link>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    }
+
+                    return (
+                      <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                        {filtered.map((ord) => (
+                          <div key={ord.id} className="p-4 sm:p-6 space-y-4 hover:bg-slate-50/50 dark:hover:bg-navy-950/40 transition-colors">
+                            {/* Top Row: Order Details & Status */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                              <div>
+                                <div className="flex items-center gap-2.5 flex-wrap">
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard?.writeText(ord.order_number);
+                                      setCopiedOrderNumber(ord.order_number);
+                                      setTimeout(() => setCopiedOrderNumber(null), 2500);
+                                    }}
+                                    className="font-mono font-bold text-slate-900 dark:text-white text-sm sm:text-base hover:text-sky-600 dark:hover:text-cyan-400 flex items-center gap-1.5 group cursor-pointer"
+                                    title="Click to copy Order #"
+                                  >
+                                    <span>{ord.order_number}</span>
+                                    {copiedOrderNumber === ord.order_number ? (
+                                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                                        <Check className="w-3.5 h-3.5" /> Copied!
+                                      </span>
+                                    ) : (
+                                      <Copy className="w-3.5 h-3.5 text-slate-400 group-hover:text-sky-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    )}
+                                  </button>
+
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 dark:bg-navy-950 text-sky-700 dark:text-cyan-300 border border-slate-200 dark:border-slate-800">
+                                    Cust ID: #CRX-C-{String(ord.customer_id || session.user?.id || 1).padStart(4, '0')}
+                                  </span>
+
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                                    (ord.order_status || '').toLowerCase() === 'delivered' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' :
+                                    (ord.order_status || '').toLowerCase() === 'shipped' ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-cyan-300 border border-sky-200 dark:border-cyan-800' :
+                                    (ord.order_status || '').toLowerCase() === 'processing' ? 'bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800' :
+                                    (ord.order_status || '').toLowerCase() === 'confirmed' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800' :
+                                    (ord.order_status || '').toLowerCase() === 'cancelled' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800' :
+                                    'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                  }`}>
+                                    Status: {ord.order_status}
+                                  </span>
+
+                                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                                    ord.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                                    'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                  }`}>
+                                    {ord.payment_method?.toUpperCase()} • {ord.payment_status?.toUpperCase()}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex-wrap">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>Placed on {new Date(ord.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                  </span>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-1">
+                                    <Building2 className="w-3.5 h-3.5" />
+                                    <span>{ord.branch_name || 'CORENIX Fulfillment Center'}</span>
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 sm:self-start">
+                                <button
+                                  onClick={() => setSelectedInvoiceOrder(ord)}
+                                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                  title="View or Print Invoice Receipt"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-cyan-400" />
+                                  <span>Invoice</span>
+                                </button>
+                                <div className="text-right">
+                                  <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                                    ৳{Number(ord.total_amount).toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 5-Step Order Progress Tracker */}
+                            {(() => {
+                              const norm = (ord.order_status || '').toLowerCase();
+                              if (norm === 'cancelled' || norm === 'returned') {
+                                return (
+                                  <div className="py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                                    <span>This order was <strong>{ord.order_status?.toUpperCase()}</strong>. For any support or queries, contact our customer service.</span>
+                                  </div>
+                                );
+                              }
+
+                              let curr = 1;
+                              if (norm === 'confirmed') curr = 2;
+                              else if (norm === 'processing') curr = 3;
+                              else if (norm === 'shipped') curr = 4;
+                              else if (norm === 'delivered') curr = 5;
+
+                              return (
+                                <div className="py-3 px-3.5 rounded-xl bg-slate-50 dark:bg-navy-950/80 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                                    <span className="flex items-center gap-1.5 uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                      <Truck className="w-3.5 h-3.5 text-sky-600 dark:text-cyan-400" />
+                                      <span>Order Shipment Journey</span>
+                                    </span>
+                                    <span className="text-sky-600 dark:text-cyan-400 font-bold uppercase">
+                                      Stage {curr} of 5 • {norm.toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-5 gap-1.5 items-center">
+                                    {[
+                                      { num: 1, label: 'Order Placed' },
+                                      { num: 2, label: 'Confirmed' },
+                                      { num: 3, label: 'Processing & QC' },
+                                      { num: 4, label: 'In Transit' },
+                                      { num: 5, label: 'Delivered' },
+                                    ].map((s) => {
+                                      const isDone = curr >= s.num;
+                                      const isCurrent = curr === s.num;
+                                      return (
+                                        <div key={s.num} className="space-y-1 text-center">
+                                          <div
+                                            className={`h-2 rounded-full transition-all ${
+                                              isDone
+                                                ? 'bg-emerald-500 dark:bg-emerald-400 shadow-xs'
+                                                : 'bg-slate-200 dark:bg-slate-800'
+                                            }`}
+                                          />
+                                          <div
+                                            className={`text-[10px] truncate ${
+                                              isCurrent
+                                                ? 'font-black text-sky-600 dark:text-cyan-400'
+                                                : isDone
+                                                ? 'font-semibold text-slate-700 dark:text-slate-300'
+                                                : 'text-slate-400'
+                                            }`}
+                                          >
+                                            {s.label}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* Ordered Products (Itemized Cards) */}
+                            <div className="space-y-2 pt-1">
+                              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                  <ShoppingBag className="w-3.5 h-3.5 text-sky-600 dark:text-cyan-400" />
+                                  <span>Ordered Items ({ord.items?.length || ord.item_count || 1})</span>
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 gap-2">
+                                {ord.items && ord.items.length > 0 ? (
+                                  ord.items.map((item: any, idx: number) => (
+                                    <div
+                                      key={item.id || idx}
+                                      className="p-3 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                    >
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        {/* Thumbnail */}
+                                        <div className="w-12 h-12 rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-slate-800 flex-shrink-0 flex items-center justify-center overflow-hidden p-1">
+                                          {item.image_url ? (
+                                            <img
+                                              src={item.image_url}
+                                              alt={item.product_name}
+                                              className="w-full h-full object-contain"
+                                            />
+                                          ) : (
+                                            <Package className="w-5 h-5 text-slate-400" />
+                                          )}
+                                        </div>
+
+                                        {/* Details */}
+                                        <div className="min-w-0">
+                                          <Link
+                                            href={item.product_slug ? `/products/${item.product_slug}` : '#'}
+                                            className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm hover:text-sky-600 dark:hover:text-cyan-400 transition-colors line-clamp-1"
+                                          >
+                                            {item.product_name}
+                                          </Link>
+                                          <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                                            {item.sku && <span>SKU: <span className="font-mono">{item.sku}</span></span>}
+                                            {item.warranty_details && (
+                                              <>
+                                                <span>•</span>
+                                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
+                                                  <ShieldCheck className="w-3 h-3" />
+                                                  <span>{item.warranty_details}</span>
+                                                </span>
+                                              </>
+                                            )}
+                                            {item.serial_numbers && (
+                                              <>
+                                                <span>•</span>
+                                                <span className="font-mono text-purple-600 dark:text-purple-400">
+                                                  SN: {item.serial_numbers}
+                                                </span>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Pricing & Quantity */}
+                                      <div className="flex items-center justify-between sm:justify-end gap-4 text-right flex-shrink-0 pl-15 sm:pl-0">
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                          <span className="font-semibold text-slate-700 dark:text-slate-300">Qty: {item.quantity}</span> × ৳{Number(item.unit_price).toLocaleString()}
+                                        </div>
+                                        <div className="text-sm font-black text-slate-900 dark:text-white">
+                                          ৳{Number(item.total_price || (item.unit_price * item.quantity)).toLocaleString()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-navy-950 border border-slate-200/80 dark:border-slate-800/80 text-xs text-slate-500 flex items-center justify-between">
+                                    <span>1 × Hardware Procurement Package</span>
+                                    <span className="font-bold text-slate-900 dark:text-white">৳{Number(ord.total_amount).toLocaleString()}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Shipping address info */}
+                              {ord.shipping_address && (
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 bg-white dark:bg-navy-900 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                                  <MapPin className="w-3.5 h-3.5 text-sky-500 flex-shrink-0" />
+                                  <span className="truncate">
+                                    Delivery to: <strong className="text-slate-700 dark:text-slate-300">{ord.shipping_address.full_name || ord.shipping_address.name || 'Customer'}</strong> ({ord.shipping_address.phone}), {ord.shipping_address.address_line1 || ord.shipping_address.address}, {ord.shipping_address.city || ''}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -1014,6 +1442,182 @@ export default function AccountPage() {
           )}
         </div>
       </main>
+
+      {/* ======================================================== */}
+      {/* CUSTOMER ORDER INVOICE / RECEIPT MODAL                   */}
+      {/* ======================================================== */}
+      {selectedInvoiceOrder && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto print:p-0 print:bg-white print:static">
+          <div className="bg-white dark:bg-navy-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full shadow-2xl relative flex flex-col max-h-[92vh] sm:max-h-[88vh] my-auto overflow-hidden print:border-none print:shadow-none print:max-h-none print:w-full">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-navy-950 shrink-0 print:hidden">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-sky-600 dark:text-cyan-400" />
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
+                  Purchase Invoice & Receipt
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Invoice</span>
+                </button>
+                <button
+                  onClick={() => setSelectedInvoiceOrder(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Body */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-6 text-slate-800 dark:text-slate-200 print:text-black print:p-0">
+              {/* Store Header */}
+              <div className="flex items-start justify-between border-b pb-4 border-slate-200 dark:border-slate-800">
+                <div>
+                  <div className="text-xl font-black tracking-wider text-sky-600 dark:text-cyan-400 flex items-center gap-1.5">
+                    <Sparkles className="w-5 h-5" />
+                    <span>CORENIX NEXT-GEN TECH</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Multiplan Center Level 4, Elephant Road, Dhaka-1205
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Hotline: +880 9600-267364 • Web: www.corenix.com.bd
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">Official Invoice</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
+                    {selectedInvoiceOrder.order_number}
+                  </span>
+                  <span className="text-xs text-slate-500 block mt-0.5">
+                    Date: {new Date(selectedInvoiceOrder.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Customer & Delivery Details */}
+              <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div>
+                  <strong className="text-slate-900 dark:text-white block font-bold mb-1">Customer Details:</strong>
+                  <p className="font-semibold text-slate-900 dark:text-white">{selectedInvoiceOrder.shipping_address?.full_name || session.user?.name || 'Valued Customer'}</p>
+                  <p className="font-mono text-[11px] font-bold text-sky-600 dark:text-cyan-400">
+                    Customer ID: #CRX-C-{String(selectedInvoiceOrder.customer_id || session.user?.id || 1).padStart(4, '0')}
+                  </p>
+                  <p>{selectedInvoiceOrder.shipping_address?.phone || session.user?.phone}</p>
+                  <p>{selectedInvoiceOrder.shipping_address?.email || session.user?.email}</p>
+                </div>
+                <div>
+                  <strong className="text-slate-900 dark:text-white block font-bold mb-1">Shipping & Payment:</strong>
+                  <p>{selectedInvoiceOrder.shipping_address?.address_line1 || selectedInvoiceOrder.shipping_address?.address || 'Showroom Pickup'}</p>
+                  <p>{selectedInvoiceOrder.shipping_address?.city || ''}</p>
+                  <p className="font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+                    Method: {selectedInvoiceOrder.payment_method?.toUpperCase()} ({selectedInvoiceOrder.payment_status?.toUpperCase()})
+                  </p>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="p-3">#</th>
+                      <th className="p-3">Product Description</th>
+                      <th className="p-3 text-center">Warranty</th>
+                      <th className="p-3 text-center">Qty</th>
+                      <th className="p-3 text-right">Unit Price</th>
+                      <th className="p-3 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {selectedInvoiceOrder.items && selectedInvoiceOrder.items.length > 0 ? (
+                      selectedInvoiceOrder.items.map((item: any, i: number) => (
+                        <tr key={i}>
+                          <td className="p-3 text-slate-400">{i + 1}</td>
+                          <td className="p-3">
+                            <span className="font-bold text-slate-900 dark:text-white block">{item.product_name}</span>
+                            {item.sku && <span className="text-[10px] text-slate-500">SKU: {item.sku} </span>}
+                            {item.serial_numbers && (
+                              <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 block mt-0.5">
+                                Serial: {item.serial_numbers}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-center text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                            {item.warranty_details || '1 Year Official'}
+                          </td>
+                          <td className="p-3 text-center font-bold">{item.quantity}</td>
+                          <td className="p-3 text-right">৳{Number(item.unit_price).toLocaleString()}</td>
+                          <td className="p-3 text-right font-bold">
+                            ৳{Number(item.total_price || (item.unit_price * item.quantity)).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="p-4 text-center text-slate-400">
+                          1 × Standard Procurement Package • ৳{Number(selectedInvoiceOrder.total_amount).toLocaleString()}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Financial Totals */}
+              <div className="flex justify-end text-xs">
+                <div className="w-64 space-y-1.5 bg-slate-50 dark:bg-navy-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                    <span>Subtotal:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      ৳{Number(selectedInvoiceOrder.subtotal || selectedInvoiceOrder.total_amount).toLocaleString()}
+                    </span>
+                  </div>
+                  {Number(selectedInvoiceOrder.shipping_fee) > 0 && (
+                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                      <span>Delivery Fee:</span>
+                      <span>৳{Number(selectedInvoiceOrder.shipping_fee).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {Number(selectedInvoiceOrder.discount_amount) > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Discount:</span>
+                      <span>-৳{Number(selectedInvoiceOrder.discount_amount).toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-slate-200 dark:border-slate-800 pt-1.5 flex justify-between font-black text-sm text-slate-900 dark:text-white">
+                    <span>Grand Total:</span>
+                    <span className="text-sky-600 dark:text-cyan-400">৳{Number(selectedInvoiceOrder.total_amount).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warranty & Terms Footer */}
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-4 text-[11px] text-slate-400 space-y-1">
+                <p>• All genuine hardware items come with official manufacturer brand replacement warranties.</p>
+                <p>• For warranty claims or service support, visit our Agargaon Central RMA Hub or submit a ticket from your account portal.</p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-navy-950 shrink-0 flex items-center justify-between print:hidden">
+              <span className="text-[11px] text-slate-400">Thank you for choosing CORENIX.</span>
+              <button
+                onClick={() => setSelectedInvoiceOrder(null)}
+                className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

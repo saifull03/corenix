@@ -37,7 +37,16 @@ interface Banner {
   is_active: boolean | number;
 }
 
-const POSITIONS = ['hero', 'sidebar', 'middle', 'footer'];
+const POSITIONS_CONFIG = [
+  { value: 'hero', label: 'Hero Slider (Left Slide Carousel)', shortLabel: 'Hero Slider' },
+  { value: 'hero_collage', label: 'Hero Collage (Right 2 Cards - Image Link)', shortLabel: 'Hero Collage' },
+  { value: 'sidebar', label: 'Sidebar Banner', shortLabel: 'Sidebar' },
+  { value: 'middle', label: 'Middle Promo Banner', shortLabel: 'Middle' },
+  { value: 'footer', label: 'Footer Banner', shortLabel: 'Footer' },
+];
+
+const POSITIONS = POSITIONS_CONFIG.map(p => p.value);
+
 const EMPTY: Omit<Banner, 'id'> = {
   title: '',
   subtitle: '',
@@ -94,7 +103,10 @@ export default function AdminBannersPage() {
 
   const openCreate = () => {
     setEditingBanner(null);
-    setForm({ ...EMPTY });
+    setForm({
+      ...EMPTY,
+      position: filterPos !== 'all' ? filterPos : 'hero',
+    });
     setPreviewUrl('');
     setShowModal(true);
   };
@@ -167,19 +179,23 @@ export default function AdminBannersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.image_url.trim() || !form.link_url.trim()) {
-      showToast('error', 'Title, Image, and Link URL are required.');
+    if (!form.image_url.trim()) {
+      showToast('error', 'Banner image is required.');
+      return;
+    }
+    if (form.position !== 'hero_collage' && !form.title.trim()) {
+      showToast('error', 'Title is required.');
       return;
     }
     setSubmitting(true);
     try {
       const payload = {
         id: editingBanner?.id,
-        title: form.title,
+        title: form.title.trim() || (form.position === 'hero_collage' ? 'Collage Picture' : 'Untitled Banner'),
         subtitle: form.subtitle,
         description: form.description,
-        imageUrl: form.image_url,
-        linkUrl: form.link_url,
+        imageUrl: form.image_url.trim(),
+        linkUrl: form.link_url.trim() || '/products',
         buttonText: form.button_text,
         cta2Text: form.cta2_text,
         cta2Link: form.cta2_link,
@@ -333,20 +349,28 @@ export default function AdminBannersPage() {
 
         {/* Position filter tabs */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {['all', ...POSITIONS].map(pos => (
+          <button
+            onClick={() => setFilterPos('all')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              filterPos === 'all'
+                ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
+                : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-sky-500/50 hover:text-sky-600 dark:hover:text-brand-400'
+            }`}
+          >
+            All Banners ({banners.length})
+          </button>
+          {POSITIONS_CONFIG.map(pos => (
             <button
-              key={pos}
-              onClick={() => setFilterPos(pos)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize ${
-                filterPos === pos
+              key={pos.value}
+              onClick={() => setFilterPos(pos.value)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                filterPos === pos.value
                   ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
                   : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-sky-500/50 hover:text-sky-600 dark:hover:text-brand-400'
               }`}
             >
-              {pos === 'all' ? 'All Banners' : pos.charAt(0).toUpperCase() + pos.slice(1)}
-              {pos !== 'all' && (
-                <span className="ml-1.5 opacity-60">({banners.filter(b => b.position === pos).length})</span>
-              )}
+              {pos.shortLabel}
+              <span className="ml-1.5 opacity-60">({banners.filter(b => b.position === pos.value).length})</span>
             </button>
           ))}
         </div>
@@ -597,136 +621,177 @@ export default function AdminBannersPage() {
                 </div>
               </div>
 
-              {/* Title & Subtitle */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.title}
-                    onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                    placeholder="Engineered for Maximum Performance"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Subtitle
-                  </label>
-                  <input
-                    type="text"
-                    value={form.subtitle}
-                    onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))}
-                    placeholder="NVIDIA RTX 50 Series"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
+              {/* Position selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                  Description
+                  Banner Position *
                 </label>
-                <textarea
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  rows={2}
-                  placeholder="Short promotional description shown on the slider..."
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors resize-none"
-                />
+                <select
+                  value={form.position}
+                  onChange={e => setForm(f => ({ ...f, position: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                >
+                  {POSITIONS_CONFIG.map(p => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Badge + Link */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Badge Text
-                  </label>
-                  <input
-                    type="text"
-                    value={form.badge_text}
-                    onChange={e => setForm(f => ({ ...f, badge_text: e.target.value }))}
-                    placeholder="RTX 50 Series Available Now"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Link URL *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.link_url}
-                    onChange={e => setForm(f => ({ ...f, link_url: e.target.value }))}
-                    placeholder="/products or /category/gpu"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  />
-                </div>
-              </div>
+              {form.position === 'hero_collage' ? (
+                /* Simplified Form for Collage Cards (Clean Picture Link) */
+                <div className="space-y-4">
+                  <div className="p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-700 dark:text-sky-300 text-xs">
+                    💡 <strong>Hero Collage Card:</strong> Collage cards on the right of the hero section are displayed as clean, full-bleed pictures with no text or blur. You only need to upload the image and set the destination Link URL!
+                  </div>
 
-              {/* CTAs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Primary CTA Text
-                  </label>
-                  <input
-                    type="text"
-                    value={form.button_text}
-                    onChange={e => setForm(f => ({ ...f, button_text: e.target.value }))}
-                    placeholder="Shop Now"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Secondary CTA Text
-                  </label>
-                  <input
-                    type="text"
-                    value={form.cta2_text}
-                    onChange={e => setForm(f => ({ ...f, cta2_text: e.target.value }))}
-                    placeholder="Browse All Hardware"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  />
-                </div>
-              </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                      Destination Link URL *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={form.link_url}
+                      onChange={e => setForm(f => ({ ...f, link_url: e.target.value }))}
+                      placeholder="/products or /category/graphics-card"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Secondary CTA Link
-                  </label>
-                  <input
-                    type="text"
-                    value={form.cta2_link}
-                    onChange={e => setForm(f => ({ ...f, cta2_link: e.target.value }))}
-                    placeholder="/products"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  />
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                      Admin Reference Label (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={form.title}
+                      onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. Collage Card 2 - Pre-Built Desktops"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                    Position
-                  </label>
-                  <select
-                    value={form.position}
-                    onChange={e => setForm(f => ({ ...f, position: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
-                  >
-                    {POSITIONS.map(p => (
-                      <option key={p} value={p} className="capitalize">
-                        {p.charAt(0).toUpperCase() + p.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+              ) : (
+                /* Full Form for Hero Slider and other text-based banners */
+                <div className="space-y-5">
+                  {/* Title & Subtitle */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Title *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={form.title}
+                        onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                        placeholder="Engineered for Maximum Performance"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={form.subtitle}
+                        onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))}
+                        placeholder="NVIDIA RTX 50 Series"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                      Description
+                    </label>
+                    <textarea
+                      value={form.description}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      rows={2}
+                      placeholder="Short promotional description shown on the slider..."
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors resize-none"
+                    />
+                  </div>
+
+                  {/* Badge + Link */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Badge Text
+                      </label>
+                      <input
+                        type="text"
+                        value={form.badge_text}
+                        onChange={e => setForm(f => ({ ...f, badge_text: e.target.value }))}
+                        placeholder="RTX 50 Series Available Now"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Link URL *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={form.link_url}
+                        onChange={e => setForm(f => ({ ...f, link_url: e.target.value }))}
+                        placeholder="/products or /category/gpu"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* CTAs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Primary CTA Text
+                      </label>
+                      <input
+                        type="text"
+                        value={form.button_text}
+                        onChange={e => setForm(f => ({ ...f, button_text: e.target.value }))}
+                        placeholder="Shop Now"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Secondary CTA Text
+                      </label>
+                      <input
+                        type="text"
+                        value={form.cta2_text}
+                        onChange={e => setForm(f => ({ ...f, cta2_text: e.target.value }))}
+                        placeholder="Browse All Hardware"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                        Secondary CTA Link
+                      </label>
+                      <input
+                        type="text"
+                        value={form.cta2_link}
+                        onChange={e => setForm(f => ({ ...f, cta2_link: e.target.value }))}
+                        placeholder="/products"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Order Index + Active toggle */}
               <div className="grid grid-cols-2 gap-4 items-end">

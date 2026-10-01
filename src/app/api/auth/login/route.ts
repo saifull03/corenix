@@ -121,7 +121,6 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // Set both cookies so customer works seamlessly across all services
         const cookieOptions = {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -130,8 +129,15 @@ export async function POST(req: NextRequest) {
           maxAge: 7 * 24 * 60 * 60,
         };
 
-        response.cookies.set('corenix_token', token, cookieOptions);
+        // Set customer cookie only
         response.cookies.set('corenix_cust_token', token, cookieOptions);
+
+        // Clear any old staff cookie so customers can never access admin routes
+        response.cookies.set('corenix_token', '', {
+          httpOnly: true,
+          path: '/',
+          maxAge: 0,
+        });
 
         return response;
       }

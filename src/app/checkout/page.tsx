@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -14,10 +14,13 @@ import {
   Phone,
   Mail,
   User,
-  ShoppingBag
+  ShoppingBag,
+  Package
 } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 export default function CheckoutPage() {
+  const { cartItems, subtotal: cartSubtotal, clearCart } = useCart();
   const [name, setName] = useState('Mahmudul Karim');
   const [phone, setPhone] = useState('+8801799999999');
   const [email, setEmail] = useState('customer@gmail.com');
@@ -27,7 +30,22 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState<any | null>(null);
 
-  const subtotal = 46900;
+  // Auto-fill customer profile details if logged in
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          if (data.user.name) setName(data.user.name);
+          if (data.user.email) setEmail(data.user.email);
+          if (data.user.phone) setPhone(data.user.phone);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const hasCartItems = cartItems && cartItems.length > 0;
+  const subtotal = hasCartItems ? cartSubtotal : 46900;
   const shippingFee = deliveryType === 'shop1' || deliveryType === 'shop2' ? 0 : deliveryType === 'inside_dhaka' ? 70 : 130;
   const total = subtotal + shippingFee;
 
@@ -36,6 +54,26 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    const orderItems = hasCartItems
+      ? cartItems.map((ci) => ({
+          id: ci.id,
+          name: ci.name,
+          sku: ci.sku || `SKU-${ci.id}`,
+          price: ci.price,
+          quantity: ci.quantity,
+          warranty: ci.warranty || '1-3 Years Official Warranty',
+        }))
+      : [
+          {
+            id: 1,
+            name: 'MSI GeForce RTX 5060 Gaming X 8GB GDDR6 Graphics Card',
+            sku: 'GPU-MSI-5060-GX',
+            price: 46900,
+            quantity: 1,
+            warranty: '3 Years Official Replacement Warranty',
+          }
+        ];
 
     try {
       const res = await fetch('/api/orders', {
@@ -51,22 +89,14 @@ export default function CheckoutPage() {
           paymentMethod,
           subtotal,
           shippingFee,
-          items: [
-            {
-              id: 1,
-              name: 'MSI GeForce RTX 5060 Gaming X 8GB GDDR6 Graphics Card',
-              sku: 'GPU-MSI-5060-GX',
-              price: 46900,
-              quantity: 1,
-              warranty: '3 Years Official Replacement Warranty',
-            }
-          ]
+          items: orderItems
         })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
         setOrderConfirmed(data);
+        if (hasCartItems) clearCart();
       } else {
         alert(data.error || 'Failed to place order.');
       }
@@ -95,7 +125,7 @@ export default function CheckoutPage() {
                 Thank you for your order!
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Your order has been recorded into the CORENIX database. Inventory is reserved.
+                Your order has been recorded into the CORENIX database. Inventory is reserved and live tracking is available.
               </p>
             </div>
 
@@ -120,12 +150,13 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-3 pt-4">
+            <div className="flex items-center justify-center gap-3 pt-4 flex-wrap">
               <Link
-                href="/products"
-                className="px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs transition-colors shadow-sm"
+                href="/account"
+                className="px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs transition-colors shadow-sm flex items-center gap-1.5"
               >
-                Continue Shopping
+                <Package className="w-4 h-4" />
+                <span>View My Orders & Track Status</span>
               </Link>
               <button
                 onClick={() => window.print()}
@@ -133,6 +164,12 @@ export default function CheckoutPage() {
               >
                 Print Invoice
               </button>
+              <Link
+                href="/products"
+                className="px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors"
+              >
+                Continue Shopping
+              </Link>
             </div>
           </div>
         ) : (

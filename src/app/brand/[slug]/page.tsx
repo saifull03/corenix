@@ -61,18 +61,18 @@ export default async function BrandPage({ params, searchParams }: Props) {
   if (sortBy === 'price_desc') orderBy = 'p.selling_price DESC';
   if (sortBy === 'newest') orderBy = 'p.created_at DESC';
 
-  // 3. Fetch Brand Products
+  // 3. Fetch Brand Products (Deduplicated with subquery image)
   const products = await query<Product[]>(
     `SELECT p.*,
             b.name as brand_name, b.slug as brand_slug,
             c.name as category_name, c.slug as category_slug,
-            pi.image_url as primary_image,
+            (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as primary_image,
             (SELECT SUM(quantity - reserved_qty) FROM inventory WHERE product_id = p.id) as total_stock
      FROM products p
      JOIN brands b ON p.brand_id = b.id
      JOIN categories c ON p.category_id = c.id
-     LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
      WHERE b.id = ? AND p.status = 'published'
+     GROUP BY p.id
      ORDER BY ${orderBy}`,
     [brand.id]
   );
@@ -193,8 +193,8 @@ export default async function BrandPage({ params, searchParams }: Props) {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
+          {products.map((p, idx) => (
+            <ProductCard key={`brand-prod-${p.id}-${idx}`} product={p} />
           ))}
         </div>
       </main>

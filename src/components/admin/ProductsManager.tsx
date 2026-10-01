@@ -8,6 +8,7 @@ import {
   Search,
   ExternalLink,
   Copy,
+  Edit3,
   Trash2,
   X,
   SlidersHorizontal,
@@ -416,9 +417,13 @@ export default function ProductsManager({ initialProducts }: Props) {
                             className="w-10 h-10 object-contain bg-slate-50 dark:bg-navy-950 rounded-lg p-1 border border-slate-200 dark:border-slate-800 flex-shrink-0"
                           />
                           <div className="min-w-0 max-w-xs">
-                            <span className="font-bold text-slate-900 dark:text-white block truncate" title={p.name}>
+                            <Link
+                              href={`/admin/products/${p.id}/edit`}
+                              className="font-bold text-slate-900 dark:text-white block truncate hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                              title={`Edit ${p.name}`}
+                            >
                               {highlightMatch(p.name, searchQuery)}
-                            </span>
+                            </Link>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1">
                                 <span className="text-slate-400 dark:text-slate-500">SKU:</span>
@@ -505,6 +510,16 @@ export default function ProductsManager({ initialProducts }: Props) {
                       {/* Actions */}
                       <td className="py-3 px-3 text-center">
                         <div className="flex items-center justify-center gap-1.5">
+                          {/* Edit Product */}
+                          <Link
+                            href={`/admin/products/${p.id}/edit`}
+                            className="p-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-950/60 dark:hover:bg-brand-900/60 dark:text-brand-300 transition-colors border border-brand-200/80 dark:border-brand-800/80"
+                            title="Edit Product (Pricing, Stock, Specs & SEO)"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </Link>
+
+                          {/* View Storefront */}
                           <Link
                             href={`/product/${p.slug}`}
                             target="_blank"
@@ -514,6 +529,7 @@ export default function ProductsManager({ initialProducts }: Props) {
                             <ExternalLink className="w-3.5 h-3.5" />
                           </Link>
 
+                          {/* Copy SKU */}
                           <button
                             type="button"
                             onClick={() => handleCopySku(p.sku)}

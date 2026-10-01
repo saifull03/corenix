@@ -124,7 +124,7 @@ export default function CategoryNav() {
                                   const isCurrentSub = activeSubSlug === item.slug;
                                   const hasChildren = item.children && item.children.length > 0;
                                   return (
-                              <div
+                                    <div
                                       key={item.slug}
                                       onMouseEnter={() => handleSubHover(item)}
                                     >
@@ -133,26 +133,17 @@ export default function CategoryNav() {
                                         onClick={closeAll}
                                         className={`flex items-center justify-between px-3 py-1.5 rounded-md text-[13px] transition-colors leading-tight ${
                                           isCurrentSub
-                                            ? 'bg-slate-100/90 dark:bg-slate-800/90 text-red-600 dark:text-red-400 font-semibold'
-                                            : 'text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                            ? 'bg-slate-100/90 dark:bg-slate-800/90 text-emerald-600 dark:text-emerald-400 font-semibold'
+                                            : 'text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                         }`}
                                       >
                                         <span className="truncate pr-2">{item.name}</span>
                                         <span className="flex items-center gap-1.5 flex-shrink-0">
-                                          {hasChildren && item.children && (
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                                              isCurrentSub
-                                                ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                                                : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
-                                            }`}>
-                                              {item.children.length}
-                                            </span>
-                                          )}
                                           {hasChildren && (
                                             <svg
-                                              className={`w-2.5 h-2.5 flex-shrink-0 transition-transform ${
+                                              className={`w-2.5 h-2.5 flex-shrink-0 ${
                                                 isCurrentSub
-                                                  ? 'text-red-600 fill-red-600'
+                                                  ? 'text-emerald-600 fill-emerald-600'
                                                   : 'text-slate-400 fill-slate-400'
                                               }`}
                                               viewBox="0 0 6 10"
@@ -168,27 +159,39 @@ export default function CategoryNav() {
                               </div>
                             ))}
 
-                            {/* Level-3 Submenu for Accessories (Whole list displayed, NO box scroll) */}
+                            {/* Level-3 Submenu for Accessories Brands only (2 columns) */}
                             {activeSub && activeSub.children && activeSub.children.length > 0 && (
-                              <div className="w-[245px] p-2.5 bg-slate-50/90 dark:bg-navy-950/80 flex flex-col gap-1 rounded-br-xl">
-                                <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/60 dark:border-slate-800/80 mb-1 flex items-center justify-between">
-                                  <span className="truncate max-w-[160px]">{activeSub.name}</span>
+                              <div
+                                className={`${
+                                  activeSub.children.length > 6
+                                    ? 'w-[320px] sm:w-[350px] p-3'
+                                    : 'w-[200px] sm:w-[220px] p-2.5'
+                                } bg-white dark:bg-navy-950 flex flex-col rounded-br-xl shadow-xl`}
+                              >
+                                <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800 mb-1.5 flex items-center justify-between">
+                                  <span className="truncate max-w-[180px] text-slate-600 dark:text-slate-300 font-bold">{activeSub.name}</span>
                                   <Link
                                     href={`/category/${activeSub.slug}`}
                                     onClick={closeAll}
-                                    className="text-[11px] text-red-600 hover:underline lowercase font-medium"
+                                    className="text-[11px] text-red-600 dark:text-red-400 hover:underline lowercase font-medium"
                                   >
                                     all
                                   </Link>
                                 </div>
-                                {/* Whole list displayed openly without box scroll */}
-                                <div className="space-y-0.5">
-                                  {activeSub.children.map((child) => (
+                                <div
+                                  className={
+                                    activeSub.children.length > 6
+                                      ? 'grid grid-cols-2 gap-x-2 gap-y-0.5'
+                                      : 'flex flex-col gap-0.5'
+                                  }
+                                >
+                                  {activeSub.children.map((child, childIdx) => (
                                     <Link
-                                      key={child.slug}
-                                      href={`/category/${child.slug}`}
+                                      key={`${child.slug}-${childIdx}`}
+                                      href={`/category/${activeSub.slug}?brand=${child.slug}`}
                                       onClick={closeAll}
-                                      className="block px-3 py-1.5 rounded-md text-[12.5px] text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                                      className="block px-2.5 py-1.5 rounded-md text-[13px] text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors truncate"
+                                      title={child.name}
                                     >
                                       {child.name}
                                     </Link>
@@ -208,7 +211,7 @@ export default function CategoryNav() {
                                 const isCurrentSub = activeSubSlug === item.slug;
                                 const hasChildren = item.children && item.children.length > 0;
                                 return (
-                              <div
+                                  <div
                                     key={item.slug}
                                     onMouseEnter={() => handleSubHover(item)}
                                   >
@@ -217,26 +220,17 @@ export default function CategoryNav() {
                                       onClick={closeAll}
                                       className={`flex items-center justify-between px-3 py-1.5 rounded-md text-[13px] transition-colors leading-tight ${
                                         isCurrentSub
-                                          ? 'bg-slate-100/90 dark:bg-slate-800/90 text-red-600 dark:text-red-400 font-semibold'
-                                          : 'text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-semibold'
+                                          : 'text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                       }`}
                                     >
                                       <span className="truncate pr-2">{item.name}</span>
                                       <span className="flex items-center gap-1.5 flex-shrink-0">
-                                        {hasChildren && item.children && (
-                                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                                            isCurrentSub
-                                              ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                                              : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
-                                          }`}>
-                                            {item.children.length}
-                                          </span>
-                                        )}
                                         {hasChildren && (
                                           <svg
                                             className={`w-2.5 h-2.5 flex-shrink-0 ${
                                               isCurrentSub
-                                                ? 'text-red-600 fill-red-600'
+                                                ? 'text-emerald-600 fill-emerald-600'
                                                 : 'text-slate-400 fill-slate-400'
                                             }`}
                                             viewBox="0 0 6 10"
@@ -251,27 +245,39 @@ export default function CategoryNav() {
                               })}
                             </div>
 
-                            {/* Level-3 Submenu (Whole list displayed openly, NO box scroll) */}
+                            {/* Level-3 Submenu for Brands only (Whole list displayed openly in 2 columns) */}
                             {activeSub && activeSub.children && activeSub.children.length > 0 && (
-                              <div className="w-[245px] p-2.5 bg-slate-50/90 dark:bg-navy-950/80 flex flex-col gap-1 rounded-br-xl">
-                                <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/60 dark:border-slate-800/80 mb-1 flex items-center justify-between">
-                                  <span className="truncate max-w-[160px]">{activeSub.name}</span>
+                              <div
+                                className={`${
+                                  activeSub.children.length > 6
+                                    ? 'w-[320px] sm:w-[350px] p-3'
+                                    : 'w-[200px] sm:w-[220px] p-2.5'
+                                } bg-white dark:bg-navy-950 flex flex-col rounded-br-xl shadow-xl`}
+                              >
+                                <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800 mb-1.5 flex items-center justify-between">
+                                  <span className="truncate max-w-[180px] text-slate-600 dark:text-slate-300 font-bold">{activeSub.name}</span>
                                   <Link
                                     href={`/category/${activeSub.slug}`}
                                     onClick={closeAll}
-                                    className="text-[11px] text-red-600 hover:underline lowercase font-medium"
+                                    className="text-[11px] text-red-600 dark:text-red-400 hover:underline lowercase font-medium"
                                   >
                                     all
                                   </Link>
                                 </div>
-                                {/* Whole list displayed openly without box scroll */}
-                                <div className="space-y-0.5">
-                                  {activeSub.children.map((child) => (
+                                <div
+                                  className={
+                                    activeSub.children.length > 6
+                                      ? 'grid grid-cols-2 gap-x-2 gap-y-0.5'
+                                      : 'flex flex-col gap-0.5'
+                                  }
+                                >
+                                  {activeSub.children.map((child, childIdx) => (
                                     <Link
-                                      key={child.slug}
-                                      href={`/category/${child.slug}`}
+                                      key={`${child.slug}-${childIdx}`}
+                                      href={`/category/${activeSub.slug}?brand=${child.slug}`}
                                       onClick={closeAll}
-                                      className="block px-3 py-1.5 rounded-md text-[12.5px] text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                                      className="block px-2.5 py-1.5 rounded-md text-[13px] text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors truncate"
+                                      title={child.name}
                                     >
                                       {child.name}
                                     </Link>
