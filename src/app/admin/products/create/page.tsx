@@ -74,50 +74,50 @@ export default function CreateProductPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
 
-  // Form State
+  // Form State - Clean blank state with placeholder guidance
   const [formData, setFormData] = useState({
     // 1. Basic Info
-    name: 'MSI GeForce RTX 5070 Gaming Trio 12GB GDDR7',
-    slug: 'msi-rtx-5070-gaming-trio-12gb',
-    sku: 'GPU-MSI-5070-TRIO',
-    barcode: '4719072991021',
-    model: 'RTX 5070 GAMING TRIO',
-    mpn: 'G5070-GT12',
-    category_id: 6,
-    brand_id: 1,
-    warranty_period: '3 Years Official Replacement Warranty',
+    name: '',
+    slug: '',
+    sku: '',
+    barcode: '',
+    model: '',
+    mpn: '',
+    category_id: 0,
+    brand_id: 0,
+    warranty_period: '',
     status: 'published',
-    is_featured: true,
-    is_new: true,
+    is_featured: false,
+    is_new: false,
     // 4. Pricing
-    purchase_cost: 65000,
-    selling_price: 78000,
-    discount_price: 74900,
+    purchase_cost: '' as string | number,
+    selling_price: '' as string | number,
+    discount_price: '' as string | number,
     // 5. Inventory per branch
-    wh_stock: 20,
-    shop1_stock: 8,
-    shop2_stock: 5,
-    rma_stock: 0,
+    wh_stock: '' as string | number,
+    shop1_stock: '' as string | number,
+    shop2_stock: '' as string | number,
+    rma_stock: '' as string | number,
     // 6. Image
-    primary_image: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=80',
+    primary_image: '',
     // 7. Specifications
-    spec_vram: '12GB GDDR7',
-    spec_bus: '192-bit',
-    spec_clock: '2610 MHz',
-    spec_power: '250W',
+    spec_vram: '',
+    spec_bus: '',
+    spec_clock: '',
+    spec_power: '',
     // 8. Key Features
-    feature1: 'Next-Gen Blackwell Architecture with DLSS 4 Support',
-    feature2: 'TRI FROZR 3 Thermal Design with TORX Fan 5.0',
-    feature3: 'Solid Nickel-Plated Copper Baseplate and Heatpipes',
+    feature1: '',
+    feature2: '',
+    feature3: '',
     // 9. Description
-    overview: 'The MSI GeForce RTX 5070 Gaming Trio delivers dominant graphical prowess for 1440p and 4K ultra-raytraced gaming. Built with high-speed GDDR7 memory and precision cooling.',
+    overview: '',
     // 10. SEO
-    meta_title: 'MSI GeForce RTX 5070 Gaming Trio 12GB Price in BD | CORENIX',
-    meta_desc: 'Buy MSI RTX 5070 Gaming Trio 12GB Graphics Card in Bangladesh with 3 years warranty from CORENIX. Check benchmarks, specs and live branch stock.',
-    focus_keyword: 'msi rtx 5070 gaming trio',
+    meta_title: '',
+    meta_desc: '',
+    focus_keyword: '',
     // 11. PC Builder
-    is_pc_builder: true,
-    pc_builder_component: 'gpu',
+    is_pc_builder: false,
+    pc_builder_component: 'cpu',
   });
 
   // Image management state
@@ -235,8 +235,11 @@ export default function CreateProductPage() {
     });
   };
 
-  const calculatedProfit = (formData.discount_price || formData.selling_price) - formData.purchase_cost;
-  const calculatedMargin = formData.selling_price > 0 ? ((calculatedProfit / formData.selling_price) * 100).toFixed(1) : 0;
+  const pCost = Number(formData.purchase_cost) || 0;
+  const pSell = Number(formData.discount_price || formData.selling_price) || 0;
+  const pRegular = Number(formData.selling_price) || 0;
+  const calculatedProfit = pSell > 0 ? pSell - pCost : 0;
+  const calculatedMargin = pRegular > 0 ? ((calculatedProfit / pRegular) * 100).toFixed(1) : '0.0';
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -404,7 +407,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.sku}
                   onChange={(e) => handleChange('sku', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono text-xs focus:outline-none focus:border-brand-500"
+                  placeholder="e.g. GPU-MSI-5070-TRIO"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono text-xs focus:outline-none focus:border-brand-500 placeholder:text-slate-600"
                 />
               </div>
 
@@ -414,7 +418,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.barcode}
                   onChange={(e) => handleChange('barcode', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono"
+                  placeholder="e.g. 4719072991021"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500"
                 />
               </div>
 
@@ -424,7 +429,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.model}
                   onChange={(e) => handleChange('model', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. RTX 5070 GAMING TRIO"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500"
                 />
               </div>
 
@@ -434,7 +440,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.warranty_period}
                   onChange={(e) => handleChange('warranty_period', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. 3 Years Official Replacement Warranty"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500"
                 />
               </div>
 
@@ -725,8 +732,9 @@ export default function CreateProductPage() {
                 <input
                   type="number"
                   value={formData.purchase_cost}
-                  onChange={(e) => handleChange('purchase_cost', Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono"
+                  onChange={(e) => handleChange('purchase_cost', e.target.value)}
+                  placeholder="e.g. 65000"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
                 <span className="text-[10px] text-slate-500 mt-1 block">Never exposed to public storefront</span>
               </div>
@@ -736,8 +744,9 @@ export default function CreateProductPage() {
                 <input
                   type="number"
                   value={formData.selling_price}
-                  onChange={(e) => handleChange('selling_price', Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono"
+                  onChange={(e) => handleChange('selling_price', e.target.value)}
+                  placeholder="e.g. 78000"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -746,8 +755,9 @@ export default function CreateProductPage() {
                 <input
                   type="number"
                   value={formData.discount_price}
-                  onChange={(e) => handleChange('discount_price', Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono"
+                  onChange={(e) => handleChange('discount_price', e.target.value)}
+                  placeholder="e.g. 74900 (Optional)"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
             </div>
@@ -779,8 +789,9 @@ export default function CreateProductPage() {
                 <input
                   type="number"
                   value={formData.wh_stock}
-                  onChange={(e) => handleChange('wh_stock', Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono"
+                  onChange={(e) => handleChange('wh_stock', e.target.value)}
+                  placeholder="e.g. 20"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -789,8 +800,9 @@ export default function CreateProductPage() {
                 <input
                   type="number"
                   value={formData.shop1_stock}
-                  onChange={(e) => handleChange('shop1_stock', Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono"
+                  onChange={(e) => handleChange('shop1_stock', e.target.value)}
+                  placeholder="e.g. 8"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -799,8 +811,9 @@ export default function CreateProductPage() {
                 <input
                   type="number"
                   value={formData.shop2_stock}
-                  onChange={(e) => handleChange('shop2_stock', Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono"
+                  onChange={(e) => handleChange('shop2_stock', e.target.value)}
+                  placeholder="e.g. 5"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -809,8 +822,9 @@ export default function CreateProductPage() {
                 <input
                   type="number"
                   value={formData.rma_stock}
-                  onChange={(e) => handleChange('rma_stock', Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono"
+                  onChange={(e) => handleChange('rma_stock', e.target.value)}
+                  placeholder="e.g. 0"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
             </div>
@@ -1326,7 +1340,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.feature1}
                   onChange={(e) => handleChange('feature1', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. Next-Gen Blackwell Architecture with DLSS 4 Support"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -1336,7 +1351,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.feature2}
                   onChange={(e) => handleChange('feature2', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. TRI FROZR 3 Thermal Design with TORX Fan 5.0"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -1346,7 +1362,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.feature3}
                   onChange={(e) => handleChange('feature3', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. Solid Nickel-Plated Copper Baseplate and Precision Heatpipes"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
             </div>
@@ -1366,7 +1383,8 @@ export default function CreateProductPage() {
                 rows={5}
                 value={formData.overview}
                 onChange={(e) => handleChange('overview', e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-brand-500"
+                placeholder="Write detailed product overview, technical highlights, performance benchmarks, and key advantages for your customers..."
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
               />
             </div>
           </div>
@@ -1385,13 +1403,13 @@ export default function CreateProductPage() {
                 Google SERP Snippet Preview
               </span>
               <div className="text-cyan-400 text-sm font-semibold truncate hover:underline cursor-pointer">
-                {formData.meta_title}
+                {formData.meta_title || formData.name || 'Product Title Price in BD | CORENIX'}
               </div>
               <div className="text-[11px] text-emerald-400 truncate">
-                https://corenix.com.bd/product/{formData.slug}
+                https://corenix.com.bd/product/{formData.slug || 'product-url-slug'}
               </div>
               <p className="text-slate-400 text-xs line-clamp-2">
-                {formData.meta_desc}
+                {formData.meta_desc || 'Buy official hardware in Bangladesh with manufacturer warranty from CORENIX. Check specifications, reviews, and multi-branch live stock.'}
               </p>
             </div>
 
@@ -1402,7 +1420,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.meta_title}
                   onChange={(e) => handleChange('meta_title', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. MSI GeForce RTX 5070 Gaming Trio 12GB Price in BD | CORENIX"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -1412,7 +1431,8 @@ export default function CreateProductPage() {
                   rows={2}
                   value={formData.meta_desc}
                   onChange={(e) => handleChange('meta_desc', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. Buy MSI RTX 5070 Gaming Trio 12GB Graphics Card in Bangladesh with 3 years warranty from CORENIX. Check benchmarks, specs and live branch stock."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
 
@@ -1422,7 +1442,8 @@ export default function CreateProductPage() {
                   type="text"
                   value={formData.focus_keyword}
                   onChange={(e) => handleChange('focus_keyword', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white"
+                  placeholder="e.g. msi rtx 5070 gaming trio"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 text-xs"
                 />
               </div>
             </div>

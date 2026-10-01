@@ -115,7 +115,7 @@ export default function HeroSlider({
   const [isPaused, setIsPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const progressRef = useRef<NodeJS.Timeout | null>(null);
-  const SLIDE_DURATION = 6000;
+  const SLIDE_DURATION = 5000;
 
   // Auto-fetch if no initial banners provided
   useEffect(() => {

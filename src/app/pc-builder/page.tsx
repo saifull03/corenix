@@ -158,18 +158,54 @@ export default function PcBuilderPage() {
     const catName = (p.category_name || '').toLowerCase().trim();
     const name = (p.name || '').toLowerCase().trim();
 
-    // 1. GLOBAL EXCLUSION: Laptops, notebooks & portable PCs must NEVER appear in desktop component slots
-    const isLaptop =
+    // 1. GLOBAL EXCLUSION: Complete pre-built systems & unrelated gear must NEVER appear in DIY component slots
+    const isCompleteSystemOrOther =
       catSlug.includes('laptop') ||
       catName.includes('laptop') ||
+      catSlug.includes('desktop') ||
+      catName.includes('desktop') ||
+      catSlug.includes('aio') ||
+      catSlug.includes('all-in-one') ||
+      catName.includes('all-in-one') ||
+      catSlug.includes('brand-pc') ||
+      catSlug.includes('mac-') ||
+      catSlug.includes('apple-') ||
+      catSlug.includes('imac') ||
+      catSlug.includes('server') ||
+      catName.includes('server') ||
+      catSlug.includes('camera') ||
+      catSlug.includes('gadget') ||
+      catSlug.includes('watch') ||
+      catSlug.includes('earbuds') ||
+      catSlug.includes('software') ||
+      catSlug.includes('console') ||
+      catSlug.includes('chair') ||
+      catSlug.includes('desk') ||
+      name.includes('desktop pc') ||
+      name.includes('brand desktop') ||
+      name.includes('mini tower') ||
+      name.includes('sff pc') ||
+      name.includes('gaming desktop') ||
+      name.includes('all-in-one') ||
+      name.includes('mac mini') ||
+      name.includes('mac studio') ||
+      name.includes('imac') ||
+      name.includes('thinkcentre') ||
+      name.includes('optiplex') ||
+      name.includes('vostro') ||
+      name.includes('omen 45l') ||
+      name.includes('pro tower') ||
+      name.includes('prodesk') ||
+      name.includes('expertcenter') ||
+      name.includes('rog strix g16chr') ||
+      name.includes('alienware aurora') ||
+      name.includes('ideacentre') ||
+      name.includes('legion tower') ||
       name.includes('laptop') ||
       name.includes('notebook') ||
-      name.includes('zephyrus') ||
-      name.includes('legion') ||
-      name.includes('macbook') ||
-      name.includes('thinkpad');
+      name.includes('macbook');
 
-    if (isLaptop) {
+    if (isCompleteSystemOrOther) {
       return false;
     }
 
@@ -181,7 +217,7 @@ export default function PcBuilderPage() {
       return comp === targetSlot.toLowerCase();
     }
 
-    // 3. Exact slot rules & negative exclusions
+    // 3. Exact slot rules & category/attribute matching
     switch (targetSlot) {
       case 'cpu': {
         if (
@@ -193,7 +229,10 @@ export default function PcBuilderPage() {
           name.includes('liquid') ||
           name.includes('aio') ||
           name.includes('motherboard') ||
-          catSlug.includes('motherboard')
+          catSlug.includes('motherboard') ||
+          name.includes('desktop') ||
+          name.includes('pc') ||
+          catSlug.includes('desktop')
         ) {
           return false;
         }
@@ -203,29 +242,25 @@ export default function PcBuilderPage() {
           catSlug === 'cpu' ||
           catName.toLowerCase().includes('processor') ||
           catName.toLowerCase().includes('cpu') ||
-          (name.includes('processor') && !name.includes('cooler')) ||
-          ((name.includes('ryzen') || name.includes('intel core') || name.includes('core i3') || name.includes('core i5') || name.includes('core i7') || name.includes('core i9') || name.includes('core ultra')) && !name.includes('cooler') && !name.includes('fan'))
+          (name.includes('processor') && !name.includes('cooler'))
         );
       }
 
       case 'motherboard': {
-        if (name.includes('cooler') || name.includes('processor') || catSlug.includes('processor')) {
+        if (
+          name.includes('cooler') ||
+          name.includes('processor') ||
+          catSlug.includes('processor') ||
+          name.includes('desktop') ||
+          catSlug.includes('desktop')
+        ) {
           return false;
         }
         return (
           catSlug.includes('motherboard') ||
           catSlug.includes('mobo') ||
           catName.includes('motherboard') ||
-          name.includes('motherboard') ||
-          name.includes('x870') ||
-          name.includes('b650') ||
-          name.includes('b760') ||
-          name.includes('z790') ||
-          name.includes('z890') ||
-          name.includes('x670') ||
-          name.includes('a620') ||
-          name.includes('h610') ||
-          name.includes('b550')
+          name.includes('motherboard')
         );
       }
 
@@ -238,9 +273,6 @@ export default function PcBuilderPage() {
           name.includes('cooler') ||
           name.includes('liquid cooling') ||
           name.includes('aio') ||
-          name.includes('ak620') ||
-          name.includes('peerless assassin') ||
-          name.includes('kraken') ||
           name.includes('cpu cooler')
         );
       }
@@ -252,10 +284,9 @@ export default function PcBuilderPage() {
           catSlug.includes('memory') ||
           catName.includes('ram') ||
           catName.includes('memory') ||
-          name.includes('ddr5') ||
-          name.includes('ddr4') ||
           name.includes('desktop ram') ||
-          name.includes('desktop memory')
+          name.includes('ddr5') ||
+          name.includes('ddr4')
         );
       }
 
@@ -272,10 +303,7 @@ export default function PcBuilderPage() {
           name.includes('ssd') ||
           name.includes('nvme') ||
           name.includes('m.2') ||
-          name.includes('990 pro') ||
-          name.includes('sata') ||
-          name.includes('hard drive') ||
-          name.includes('barracuda')
+          name.includes('internal storage')
         );
       }
 
@@ -286,12 +314,10 @@ export default function PcBuilderPage() {
           catSlug.includes('video-card') ||
           catName.includes('graphics') ||
           catName.includes('gpu') ||
+          name.includes('graphics card') ||
           name.includes('geforce') ||
           name.includes('rtx') ||
-          name.includes('radeon') ||
-          name.includes('rx 7') ||
-          name.includes('rx 6') ||
-          name.includes('graphics card')
+          name.includes('radeon')
         );
       }
 
@@ -303,8 +329,7 @@ export default function PcBuilderPage() {
           catName.includes('power supply') ||
           catName.includes('psu') ||
           name.includes('power supply') ||
-          name.includes('80 plus') ||
-          (name.includes('psu') && !name.includes('ups'))
+          name.includes('80 plus')
         );
       }
 
@@ -312,17 +337,14 @@ export default function PcBuilderPage() {
         if (name.includes('phone') || name.includes('earphone') || name.includes('bag')) return false;
         return (
           catSlug.includes('casing') ||
+          catSlug.includes('pc-case') ||
           catSlug.includes('case') ||
           catSlug.includes('chassis') ||
           catName.includes('case') ||
           catName.includes('casing') ||
+          name.includes('pc case') ||
           name.includes('casing') ||
-          name.includes('chassis') ||
-          name.includes('mid tower') ||
-          name.includes('full tower') ||
-          name.includes('o11') ||
-          name.includes('h9 flow') ||
-          name.includes('pc case')
+          name.includes('mid-tower')
         );
       }
 
@@ -332,10 +354,7 @@ export default function PcBuilderPage() {
           catSlug.includes('display') ||
           catName.includes('monitor') ||
           catName.includes('display') ||
-          name.includes('monitor') ||
-          name.includes('gaming monitor') ||
-          name.includes('oled display') ||
-          name.includes('ips display')
+          name.includes('monitor')
         );
       }
 
@@ -343,10 +362,7 @@ export default function PcBuilderPage() {
         return (
           catSlug.includes('keyboard') ||
           catName.includes('keyboard') ||
-          name.includes('keyboard') ||
-          name.includes('mechanical keyboard') ||
-          name.includes('blackwidow') ||
-          name.includes('k70')
+          name.includes('keyboard')
         );
       }
 
@@ -356,10 +372,7 @@ export default function PcBuilderPage() {
           catSlug.includes('mouse') ||
           catName.includes('mouse') ||
           name.includes('gaming mouse') ||
-          name.includes('wireless mouse') ||
-          name.includes('superlight') ||
-          name.includes('deathadder') ||
-          (name.includes('mouse') && !name.includes('pad'))
+          name.includes('wireless mouse')
         );
       }
 
@@ -367,17 +380,11 @@ export default function PcBuilderPage() {
         return (
           catSlug.includes('ups') ||
           catName.includes('ups') ||
-          name.includes('ups') ||
-          name.includes('sine wave') ||
-          name.includes('maxgreen') ||
-          name.includes('apc') ||
-          name.includes('voltage regulator') ||
-          name.includes('power backup')
+          name.includes('ups')
         );
       }
 
       default:
-        // For custom slots, match if product category matches or name matches
         return true;
     }
   };
