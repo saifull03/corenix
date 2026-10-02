@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -29,8 +30,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || !isSuperAdmin(currentUser)) {
+      return NextResponse.json(
+        { success: false, error: 'Access Denied: Only Super Administrators can create new roles.' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { name, slug, description, permissions } = body;
+
 
     if (!name || !name.trim()) {
       return NextResponse.json({ success: false, error: 'Role name is required.' }, { status: 400 });

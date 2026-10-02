@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { query } from '@/lib/db';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 import {
   DollarSign,
   ShoppingCart,
@@ -26,6 +27,9 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
+  const currentUser = await getCurrentUser();
+  const isSuper = isSuperAdmin(currentUser);
+
   // 1. Fetch total sales & revenue
   const salesStats = await query<any[]>(
     `SELECT
@@ -84,13 +88,16 @@ export default async function AdminDashboardPage() {
      FROM products WHERE status = 'published'`
   );
 
-  // 7. Recent Admin & Staff Audit Logs (Who changed What Where)
-  const recentAuditLogs = await query<any[]>(
-    `SELECT id, user_id, user_name, role_name, module, action, record_id, new_data_json, created_at
-     FROM audit_logs
-     ORDER BY id DESC
-     LIMIT 6`
-  );
+  // 7. Recent Admin & Staff Audit Logs (Only for Super Admin)
+  const recentAuditLogs = isSuper
+    ? await query<any[]>(
+        `SELECT id, user_id, user_name, role_name, module, action, record_id, new_data_json, created_at
+         FROM audit_logs
+         ORDER BY id DESC
+         LIMIT 6`
+      )
+    : [];
+
 
   const stats = {
     revenue: Number(salesStats[0]?.total_revenue || 46970),
@@ -250,103 +257,105 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Super Admin Audit Trail & Staff Change Activity Stream (Requirement: Who changed What Where) */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-sky-600 dark:text-brand-400" />
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                Live Admin &amp; Staff Change Activity Trail
-              </h2>
+      {/* Super Admin Audit Trail & Staff Change Activity Stream (Strictly Super Admin Only) */}
+      {isSuper && (
+        <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-sky-600 dark:text-brand-400" />
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Live Admin &amp; Staff Change Activity Trail
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Live ledger of <strong>Who</strong> changed <strong>What</strong>, in which module, and when.
+              </p>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Live ledger of <strong>Who</strong> changed <strong>What</strong>, in which module, and when.
-            </p>
+
+            <Link
+              href="/admin/activity-log"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5 transition-colors"
+            >
+              <span>Full Audit Log &amp; Diff Inspector</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
-          <Link
-            href="/admin/activity-log"
-            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5 transition-colors"
-          >
-            <span>Full Audit Log &amp; Diff Inspector</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {recentAuditLogs.length === 0 ? (
-          <div className="text-center py-8 text-xs text-slate-500 dark:text-slate-400">
-            No system activity logs recorded yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {recentAuditLogs.map((log) => {
-              let parsedSummary = '';
-              try {
-                const parsed = typeof log.new_data_json === 'string' ? JSON.parse(log.new_data_json) : log.new_data_json;
-                if (parsed && typeof parsed === 'object') {
-                  const keys = Object.keys(parsed);
-                  parsedSummary = keys.slice(0, 2).map((k) => `${k}: ${String(parsed[k])}`).join(', ');
-                } else if (log.new_data_json) {
-                  parsedSummary = String(log.new_data_json);
+          {recentAuditLogs.length === 0 ? (
+            <div className="text-center py-8 text-xs text-slate-500 dark:text-slate-400">
+              No system activity logs recorded yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {recentAuditLogs.map((log) => {
+                let parsedSummary = '';
+                try {
+                  const parsed = typeof log.new_data_json === 'string' ? JSON.parse(log.new_data_json) : log.new_data_json;
+                  if (parsed && typeof parsed === 'object') {
+                    const keys = Object.keys(parsed);
+                    parsedSummary = keys.slice(0, 2).map((k) => `${k}: ${String(parsed[k])}`).join(', ');
+                  } else if (log.new_data_json) {
+                    parsedSummary = String(log.new_data_json);
+                  }
+                } catch {
+                  parsedSummary = String(log.new_data_json || '');
                 }
-              } catch {
-                parsedSummary = String(log.new_data_json || '');
-              }
 
-              return (
-                <div
-                  key={log.id}
-                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 space-y-2 hover:border-sky-300 dark:hover:border-slate-700 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded-lg bg-sky-600 dark:bg-brand-500 text-white dark:text-navy-950 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-                        {(log.user_name || 'A').charAt(0).toUpperCase()}
+                return (
+                  <div
+                    key={log.id}
+                    className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 space-y-2 hover:border-sky-300 dark:hover:border-slate-700 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-lg bg-sky-600 dark:bg-brand-500 text-white dark:text-navy-950 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
+                          {(log.user_name || 'A').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="font-bold text-slate-900 dark:text-white text-xs truncate block">
+                            {log.user_name || 'System Admin'}
+                          </span>
+                          <span className="text-[10px] text-sky-600 dark:text-brand-400 font-semibold block">
+                            {log.role_name || 'Super Admin'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <span className="font-bold text-slate-900 dark:text-white text-xs truncate block">
-                          {log.user_name || 'System Admin'}
-                        </span>
-                        <span className="text-[10px] text-sky-600 dark:text-brand-400 font-semibold block">
-                          {log.role_name || 'Super Admin'}
-                        </span>
-                      </div>
-                    </div>
 
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border flex-shrink-0 ${getActionBadgeColor(log.action)}`}>
-                      {log.action}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
-                    <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
-                      <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-bold uppercase text-[9px] text-slate-700 dark:text-slate-300">
-                        {log.module}
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border flex-shrink-0 ${getActionBadgeColor(log.action)}`}>
+                        {log.action}
                       </span>
-                      {log.record_id && (
-                        <span className="font-mono text-[10px] text-slate-400">
-                          #{log.record_id}
-                        </span>
-                      )}
                     </div>
-                    <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                  </div>
 
-                  {parsedSummary && (
-                    <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate bg-white dark:bg-slate-900 p-1.5 rounded border border-slate-200/50 dark:border-slate-800/50">
-                      {parsedSummary}
+                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                      <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-bold uppercase text-[9px] text-slate-700 dark:text-slate-300">
+                          {log.module}
+                        </span>
+                        {log.record_id && (
+                          <span className="font-mono text-[10px] text-slate-400">
+                            #{log.record_id}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+
+                    {parsedSummary && (
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate bg-white dark:bg-slate-900 p-1.5 rounded border border-slate-200/50 dark:border-slate-800/50">
+                        {parsedSummary}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Two Column: Multi-Branch Comparison & Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -429,18 +438,31 @@ export default async function AdminDashboardPage() {
               <p className="text-slate-500 dark:text-slate-400 text-[11px]">Order from Global Brand, Smart Tech, etc.</p>
             </Link>
 
-            <Link
-              href="/admin/activity-log"
-              className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 block space-y-1 transition-colors group"
-            >
-              <span className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
-                Audit Trail &amp; Logs
-              </span>
-              <p className="text-slate-500 dark:text-slate-400 text-[11px]">Inspect all admin changes &amp; diffs.</p>
-            </Link>
+            {isSuper ? (
+              <Link
+                href="/admin/activity-log"
+                className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 block space-y-1 transition-colors group"
+              >
+                <span className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
+                  Audit Trail &amp; Logs
+                </span>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px]">Inspect all admin changes &amp; diffs.</p>
+              </Link>
+            ) : (
+              <Link
+                href="/admin/orders"
+                className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 block space-y-1 transition-colors group"
+              >
+                <span className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
+                  Customer Orders
+                </span>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px]">Track invoice statuses &amp; delivery.</p>
+              </Link>
+            )}
           </div>
         </div>
       </div>
+
 
       {/* Recent Orders Table */}
       <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-xs">

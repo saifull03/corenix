@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { query, queryOne } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { getCurrentUser, isSuperAdmin } from '@/lib/auth';
 
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser();
+    const isSuper = isSuperAdmin(currentUser);
+
     const users = await query<any[]>(
       `SELECT u.id, u.name, u.email, u.phone, u.role_id, u.branch_id, u.status, u.avatar, u.created_at,
               r.name as role_name, r.slug as role_slug, r.description as role_description,
@@ -18,7 +22,14 @@ export async function GET() {
     const roles = await query<any[]>(`SELECT * FROM roles ORDER BY id ASC`);
     const branches = await query<any[]>(`SELECT id, name, code FROM branches WHERE is_active = 1`);
 
-    return NextResponse.json({ success: true, users: users || [], roles: roles || [], branches: branches || [] });
+    return NextResponse.json({
+      success: true,
+      isSuperAdmin: isSuper,
+      currentUser: currentUser ? { id: currentUser.id, name: currentUser.name, role_name: currentUser.role_name, role_slug: currentUser.role_slug } : null,
+      users: users || [],
+      roles: roles || [],
+      branches: branches || [],
+    });
   } catch (error: any) {
     console.error('Fetch users error:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch users' }, { status: 500 });
@@ -27,6 +38,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || !isSuperAdmin(currentUser)) {
+      return NextResponse.json(
+        { success: false, error: 'Access Denied: Only Super Administrators can create new staff users.' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { name, email, phone, password, roleId, branchId } = body;
 
@@ -68,6 +87,14 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || !isSuperAdmin(currentUser)) {
+      return NextResponse.json(
+        { success: false, error: 'Access Denied: Only Super Administrators can modify staff user status.' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { id, status } = body;
 
@@ -84,3 +111,4 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Failed to update user' }, { status: 500 });
   }
 }
+

@@ -21,6 +21,7 @@ export default function AdminUsersPage() {
   const [roles, setRoles] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
   const [activeTab, setActiveTab] = useState<'staff' | 'roles'>('staff');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,6 +58,7 @@ export default function AdminUsersPage() {
         setUsers(data.users);
         setRoles(data.roles);
         setBranches(data.branches);
+        setIsSuperAdminUser(Boolean(data.isSuperAdmin));
       }
     } catch (err) {
       console.error(err);
@@ -64,6 +66,7 @@ export default function AdminUsersPage() {
       setLoading(false);
     }
   };
+
 
   // Auto-slugify role name
   const handleRoleNameChange = (val: string) => {
@@ -208,21 +211,30 @@ export default function AdminUsersPage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={() => setIsAddRoleModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Add New Role</span>
-          </button>
+          {isSuperAdminUser ? (
+            <>
+              <button
+                onClick={() => setIsAddRoleModalOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Add New Role</span>
+              </button>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-sky-500/20 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Staff Account</span>
-          </button>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-sky-500/20 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Staff Account</span>
+              </button>
+            </>
+          ) : (
+            <div className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Super Admin access required to add users</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -355,19 +367,31 @@ export default function AdminUsersPage() {
                       </td>
 
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <select
-                          value={u.status}
-                          onChange={(e) => handleStatusChange(u.id, e.target.value)}
-                          className={`text-xs font-bold rounded-lg px-2.5 py-1 border outline-none cursor-pointer transition-colors ${
-                            u.status === 'active'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
-                              : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
-                          }`}
-                        >
-                          <option value="active">Active</option>
-                          <option value="inactive">Inactive</option>
-                          <option value="suspended">Suspended</option>
-                        </select>
+                        {isSuperAdminUser ? (
+                          <select
+                            value={u.status}
+                            onChange={(e) => handleStatusChange(u.id, e.target.value)}
+                            className={`text-xs font-bold rounded-lg px-2.5 py-1 border outline-none cursor-pointer transition-colors ${
+                              u.status === 'active'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                                : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
+                            }`}
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="suspended">Suspended</option>
+                          </select>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+                              u.status === 'active'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                                : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
+                            }`}
+                          >
+                            {u.status}
+                          </span>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
@@ -390,14 +414,16 @@ export default function AdminUsersPage() {
               <h3 className="font-bold text-slate-900 dark:text-white text-base">Defined Security Roles</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Manage permissions, access controls, and authorized capabilities for each role.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsAddRoleModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add New Role</span>
-            </button>
+            {isSuperAdminUser && (
+              <button
+                type="button"
+                onClick={() => setIsAddRoleModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add New Role</span>
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -422,19 +448,22 @@ export default function AdminUsersPage() {
             ))}
 
             {/* Quick Add Role Card */}
-            <button
-              type="button"
-              onClick={() => setIsAddRoleModalOpen(true)}
-              className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-5 flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-300 dark:hover:border-purple-800 transition-all min-h-[120px]"
-            >
-              <Plus className="w-6 h-6" />
-              <span className="text-xs font-bold">Create Custom Role</span>
-            </button>
+            {isSuperAdminUser && (
+              <button
+                type="button"
+                onClick={() => setIsAddRoleModalOpen(true)}
+                className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-5 flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-300 dark:hover:border-purple-800 transition-all min-h-[120px]"
+              >
+                <Plus className="w-6 h-6" />
+                <span className="text-xs font-bold">Create Custom Role</span>
+              </button>
+            )}
           </div>
         </div>
       )}
 
       {/* Add Staff Modal */}
+
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-navy-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 shadow-2xl relative">

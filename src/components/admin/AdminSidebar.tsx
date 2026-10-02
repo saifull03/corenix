@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useAdminSidebar } from './AdminSidebarContext';
 
-const menuItems = [
+const rawMenuItems = [
   { label: 'Executive Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Products Catalogue', href: '/admin/products', icon: Package },
   { label: 'Add New Product', href: '/admin/products/create', icon: Package, indent: true },
@@ -52,12 +52,43 @@ const menuItems = [
   { label: 'Users & Staff RBAC', href: '/admin/users', icon: Users },
   { label: 'Operator Approvals', href: '/admin/approvals', icon: CheckSquare },
   { label: 'ERP Integration Sync', href: '/admin/erp', icon: RefreshCw },
-  { label: 'Enterprise Audit Trail', href: '/admin/activity-log', icon: FileText },
+  { label: 'Enterprise Audit Trail', href: '/admin/activity-log', icon: FileText, superAdminOnly: true },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { isCollapsed, isMobileOpen, setIsMobileOpen, toggleSidebar } = useAdminSidebar();
+  const [currentUser, setCurrentUser] = useState<{
+    name?: string;
+    role_name?: string;
+    role_slug?: string;
+    role_id?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.userType === 'staff' && data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const isSuperAdmin = Boolean(
+    currentUser &&
+      ((currentUser.role_slug || '').toLowerCase().replace(/_/g, '-') === 'super-admin' ||
+        (currentUser.role_name || '').toLowerCase().includes('super admin') ||
+        currentUser.role_id === 1)
+  );
+
+  const menuItems = rawMenuItems.filter((item) => {
+    if (item.superAdminOnly) {
+      return isSuperAdmin;
+    }
+    return true;
+  });
 
   const handleLinkClick = () => {
     setIsMobileOpen(false);
@@ -154,13 +185,15 @@ export default function AdminSidebar() {
         <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-navy-950/60 text-xs">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-cyan-950 border border-sky-200 dark:border-brand-500/30 flex items-center justify-center font-bold text-sky-700 dark:text-brand-400 shrink-0">
-              SA
+              {(currentUser?.role_name || 'SA').slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-slate-900 dark:text-white font-bold block truncate">Super Administrator</span>
+              <span className="text-slate-900 dark:text-white font-bold block truncate">
+                {currentUser?.role_name || 'Super Administrator'}
+              </span>
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                All Branches Active
+                Active Access
               </span>
             </div>
           </div>
@@ -169,3 +202,4 @@ export default function AdminSidebar() {
     </>
   );
 }
+
