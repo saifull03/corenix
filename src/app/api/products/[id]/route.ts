@@ -102,6 +102,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       selling_price,
       discount_price,
       is_featured,
+      is_hot,
       is_new,
       is_pc_builder,
       pc_builder_component,
@@ -120,6 +121,39 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
     const discountAmount = discount_price ? Number(selling_price) - Number(discount_price) : 0;
     const discountPercent = discount_price && Number(selling_price) > 0 ? Math.round((discountAmount / Number(selling_price)) * 100) : 0;
+
+    // Handle PC Builder component assignment
+    let finalIsPcBuilder = is_pc_builder ? 1 : 0;
+    let finalPcComponent: string | null = null;
+
+    if (finalIsPcBuilder) {
+      if (pc_builder_component) {
+        finalPcComponent = pc_builder_component;
+      } else if (category_id) {
+        const cat = await queryOne<any>(`SELECT slug, name FROM categories WHERE id = ?`, [category_id]);
+        if (cat) {
+          const cSlug = (cat.slug || '').toLowerCase();
+          const cName = (cat.name || '').toLowerCase();
+          
+          // Only auto-resolve for genuine standalone components (never complete systems or laptops)
+          const isCompleteSystem = cSlug.includes('desktop-pc') || cSlug.includes('laptop') || cSlug.includes('brand-pc') || cSlug.includes('all-in-one');
+          if (!isCompleteSystem) {
+            if (cSlug.includes('ram') || cSlug.includes('memory') || cSlug.includes('ddr4') || cSlug.includes('ddr5') || (cName.includes('ram') && !cName.includes('laptop'))) finalPcComponent = 'ram';
+            else if (cSlug.includes('processor') || cSlug.includes('cpu') || (cName.includes('processor') && !cName.includes('desktop'))) finalPcComponent = 'cpu';
+            else if (cSlug.includes('motherboard') || cSlug.includes('mobo') || cName.includes('motherboard')) finalPcComponent = 'motherboard';
+            else if (cSlug.includes('cooler') || cSlug.includes('cooling') || cName.includes('cooler')) finalPcComponent = 'cooler';
+            else if (cSlug.includes('storage') || cSlug.includes('ssd') || cSlug.includes('hdd') || cSlug.includes('nvme') || cName.includes('ssd')) finalPcComponent = 'storage';
+            else if (cSlug.includes('graphics') || cSlug.includes('gpu') || cName.includes('graphics card')) finalPcComponent = 'gpu';
+            else if (cSlug.includes('power-supply') || cSlug.includes('psu') || cName.includes('power supply')) finalPcComponent = 'psu';
+            else if (cSlug.includes('casing') || cSlug.includes('case') || cSlug.includes('chassis') || cName.includes('casing')) finalPcComponent = 'case';
+            else if (cSlug.includes('monitor') || cSlug.includes('display') || cName.includes('monitor')) finalPcComponent = 'monitor';
+            else if (cSlug.includes('keyboard') || cName.includes('keyboard')) finalPcComponent = 'keyboard';
+            else if (cSlug.includes('mouse') || cSlug.includes('mice') || cName.includes('mouse')) finalPcComponent = 'mouse';
+            else if (cSlug.includes('ups') || cName.includes('ups')) finalPcComponent = 'ups';
+          }
+        }
+      }
+    }
 
     // 1. Update Core Product Table
     await query(
@@ -140,6 +174,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         discount_amount = ?,
         discount_percent = ?,
         is_featured = ?,
+        is_hot = ?,
         is_new = ?,
         is_pc_builder = ?,
         pc_builder_component = ?,
@@ -162,9 +197,10 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         discountAmount,
         discountPercent,
         is_featured ? 1 : 0,
+        is_hot ? 1 : 0,
         is_new ? 1 : 0,
-        is_pc_builder ? 1 : 0,
-        pc_builder_component || null,
+        finalIsPcBuilder ? 1 : 0,
+        finalPcComponent || null,
         productId,
       ]
     );
@@ -358,6 +394,51 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ success: true, message: 'Product archived successfully' });
   } catch (error: any) {
     console.error('Delete product error:', error);
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest, { params }: RouteContext) {
+  try {
+    const { id } = await params;
+    const productId = parseInt(id, 10);
+    if (isNaN(productId)) {
+      return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const allowedFields = ['is_featured', 'is_hot', 'is_new', 'is_sale', 'is_pc_builder', 'status', 'selling_price', 'discount_price'];
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    for (const field of allowedFields) {
+      if (field in body) {
+        updates.push(`\`${field}\` = ?`);
+        const val = body[field];
+        values.push(typeof val === 'boolean' ? (val ? 1 : 0) : val);
+      }
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json({ error: 'No valid fields provided for update' }, { status: 400 });
+    }
+
+    updates.push('`updated_at` = NOW()');
+    values.push(productId);
+
+    await query(`UPDATE products SET ${updates.join(', ')} WHERE id = ?`, values);
+
+    // Audit log
+    await logAudit({
+      module: 'Catalogue',
+      action: 'Quick Toggle Product Status',
+      recordId: productId,
+      newData: body,
+    });
+
+    return NextResponse.json({ success: true, message: 'Product updated successfully' });
+  } catch (error: any) {
+    console.error('Patch product error:', error);
     return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
 }

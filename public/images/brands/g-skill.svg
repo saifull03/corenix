@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" fill="none">
+  <g transform="translate(15, 10)">
+    <path d="M0 24L8 0h14l-3 8h-7l-4 12h8l-1.5 4H0z" fill="#DC2626"/>
+    <text x="24" y="20" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-style="italic" font-size="18" fill="#DC2626" letter-spacing="1">G.SKILL</text>
+  </g>
+</svg>

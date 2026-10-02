@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 40" fill="none">
+  <rect width="140" height="40" rx="8" fill="#0A192F"/>
+  <circle cx="28" cy="20" r="10" fill="#00A3E0"/>
+  <path d="M25 15L33 20L25 25Z" fill="#FFFFFF"/>
+  <text x="82" y="26" text-anchor="middle" fill="#00A3E0" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" letter-spacing="1.5">crucial</text>
+</svg>

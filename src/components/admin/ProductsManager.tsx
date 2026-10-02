@@ -20,6 +20,10 @@ import {
   Sparkles,
   ChevronDown,
   Check,
+  Flame,
+  Star,
+  Loader2,
+  TrendingUp,
 } from 'lucide-react';
 
 export interface ProductItem {
@@ -41,7 +45,9 @@ export interface ProductItem {
   total_stock?: number | null;
   seo_score?: number | null;
   is_featured?: number | boolean;
+  is_hot?: number | boolean;
   is_new?: number | boolean;
+  is_sale?: number | boolean;
   is_pc_builder?: number | boolean;
   created_at?: string;
 }
@@ -51,15 +57,19 @@ interface Props {
 }
 
 type SearchFieldFilter = 'all' | 'name' | 'model' | 'sku' | 'barcode';
+type HighlightFilter = 'all' | 'trending' | 'hot_deals' | 'pc_builder';
 
 export default function ProductsManager({ initialProducts }: Props) {
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchField, setSearchField] = useState<SearchFieldFilter>('all');
+  const [highlightFilter, setHighlightFilter] = useState<HighlightFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [brandFilter, setBrandFilter] = useState<string>('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('all');
   const [copiedSku, setCopiedSku] = useState<string | null>(null);
+  const [updatingFlag, setUpdatingFlag] = useState<{ id: number; field: 'is_featured' | 'is_hot' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Extract unique categories & brands for dropdown filters
   const categoriesList = useMemo(() => {
@@ -78,6 +88,11 @@ export default function ProductsManager({ initialProducts }: Props) {
     return Array.from(set).sort();
   }, [initialProducts]);
 
+  // Counts for highlights
+  const trendingCount = useMemo(() => products.filter(p => Boolean(p.is_featured)).length, [products]);
+  const hotDealsCount = useMemo(() => products.filter(p => Boolean(p.is_hot)).length, [products]);
+  const pcBuilderCount = useMemo(() => products.filter(p => Boolean(p.is_pc_builder)).length, [products]);
+
   // Copy SKU helper
   const handleCopySku = (sku: string) => {
     navigator.clipboard.writeText(sku);
@@ -85,11 +100,64 @@ export default function ProductsManager({ initialProducts }: Props) {
     setTimeout(() => setCopiedSku(null), 2000);
   };
 
-  // Filter products by search query across Name, Model, SKU, Barcode
+  // Toggle Featured/Trending or Hot Deal directly
+  const handleToggleFlag = async (productId: number, field: 'is_featured' | 'is_hot', currentValue: boolean | number | undefined) => {
+    const targetProduct = products.find(p => p.id === productId);
+    if (!targetProduct) return;
+
+    const newValue = !Boolean(currentValue);
+    setUpdatingFlag({ id: productId, field });
+
+    // Optimistic UI update
+    setProducts(prev =>
+      prev.map(p => {
+        if (p.id === productId) {
+          return { ...p, [field]: newValue };
+        }
+        return p;
+      })
+    );
+
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: newValue }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update promotion status');
+      }
+
+      const label = field === 'is_featured' ? 'Trending Status' : 'Hot Deal Status';
+      setToastMessage(`"${targetProduct.name.slice(0, 24)}..." ${label} is now ${newValue ? 'ACTIVE ⭐' : 'OFF'}`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      // Rollback
+      setProducts(prev =>
+        prev.map(p => {
+          if (p.id === productId) {
+            return { ...p, [field]: currentValue };
+          }
+          return p;
+        })
+      );
+      alert('Error updating status: ' + err.message);
+    } finally {
+      setUpdatingFlag(null);
+    }
+  };
+
+  // Filter products by search query across Name, Model, SKU, Barcode, & Highlights
   const filteredProducts = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
     return products.filter(p => {
+      // Highlight filter
+      if (highlightFilter === 'trending' && !p.is_featured) return false;
+      if (highlightFilter === 'hot_deals' && !p.is_hot) return false;
+      if (highlightFilter === 'pc_builder' && !p.is_pc_builder) return false;
+
       // Category filter
       if (categoryFilter !== 'all' && p.category_name !== categoryFilter) {
         return false;
@@ -139,7 +207,7 @@ export default function ProductsManager({ initialProducts }: Props) {
           );
       }
     });
-  }, [products, searchQuery, searchField, categoryFilter, brandFilter, stockFilter]);
+  }, [products, searchQuery, searchField, highlightFilter, categoryFilter, brandFilter, stockFilter]);
 
   // Helper to highlight matching text
   const highlightMatch = (text: string | null | undefined, query: string) => {
@@ -164,6 +232,7 @@ export default function ProductsManager({ initialProducts }: Props) {
   const isFiltered = Boolean(
     searchQuery ||
     searchField !== 'all' ||
+    highlightFilter !== 'all' ||
     categoryFilter !== 'all' ||
     brandFilter !== 'all' ||
     stockFilter !== 'all'
@@ -172,6 +241,7 @@ export default function ProductsManager({ initialProducts }: Props) {
   const resetFilters = () => {
     setSearchQuery('');
     setSearchField('all');
+    setHighlightFilter('all');
     setCategoryFilter('all');
     setBrandFilter('all');
     setStockFilter('all');
@@ -179,17 +249,26 @@ export default function ProductsManager({ initialProducts }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white dark:bg-brand-500 dark:text-navy-950 font-bold text-xs shadow-2xl border border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-950" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
-            Hardware Management
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            Hardware &amp; Homepage Promotion Management
           </span>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">
             Products Catalogue ({products.length})
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Dynamic attributes, category specification templates, and multi-location inventory.
+            Manage pricing, inventory, specifications, and 1-click homepage <strong>Trending Hardware</strong> and <strong>Hot Deals</strong>.
           </p>
         </div>
 
@@ -200,6 +279,104 @@ export default function ProductsManager({ initialProducts }: Props) {
           <Plus className="w-4 h-4" />
           <span>Create New Product (18-Step)</span>
         </Link>
+      </div>
+
+      {/* Quick Showcase Promotion Pills (Trending & Hot Deals Highlights) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <button
+          type="button"
+          onClick={() => setHighlightFilter('all')}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            highlightFilter === 'all'
+              ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white border-slate-700 shadow-md ring-2 ring-brand-500/50'
+              : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider opacity-75">All Hardware</span>
+            <Package className="w-4 h-4 opacity-75" />
+          </div>
+          <div className="text-xl font-black mt-1">{products.length} Products</div>
+          <div className="text-[10px] opacity-70 mt-0.5">Complete inventory catalogue</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHighlightFilter(highlightFilter === 'trending' ? 'all' : 'trending')}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            highlightFilter === 'trending'
+              ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-md ring-2 ring-amber-400'
+              : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-amber-400/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              Trending Hardware
+            </span>
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+              Homepage
+            </span>
+          </div>
+          <div className="text-xl font-black mt-1 text-slate-900 dark:text-white">
+            {trendingCount} <span className="text-xs font-medium opacity-80">Featured</span>
+          </div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Ranked at top of homepage trending grid
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHighlightFilter(highlightFilter === 'hot_deals' ? 'all' : 'hot_deals')}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            highlightFilter === 'hot_deals'
+              ? 'bg-rose-500 text-white border-rose-600 shadow-md ring-2 ring-rose-400'
+              : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-rose-400/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1">
+              <Flame className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+              Hot Deals
+            </span>
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300">
+              Badge &amp; Discounts
+            </span>
+          </div>
+          <div className="text-xl font-black mt-1 text-slate-900 dark:text-white">
+            {hotDealsCount} <span className="text-xs font-medium opacity-80">Promoted</span>
+          </div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Hot deal badge &amp; special pricing priority
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHighlightFilter(highlightFilter === 'pc_builder' ? 'all' : 'pc_builder')}
+          className={`p-3.5 rounded-2xl border text-left transition-all ${
+            highlightFilter === 'pc_builder'
+              ? 'bg-cyan-600 text-white border-cyan-700 shadow-md ring-2 ring-cyan-400'
+              : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-cyan-400/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
+              PC Builder Pool
+            </span>
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300">
+              Compatibility
+            </span>
+          </div>
+          <div className="text-xl font-black mt-1 text-slate-900 dark:text-white">
+            {pcBuilderCount} <span className="text-xs font-medium opacity-80">Components</span>
+          </div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+            Interactive PC configurator selection pool
+          </div>
+        </button>
       </div>
 
       {/* ── SEARCH & FILTER CONTROLS ── */}
@@ -237,7 +414,7 @@ export default function ProductsManager({ initialProducts }: Props) {
             )}
           </div>
 
-          {/* Search Target Mode Pills - Crystal Clear High Contrast in Light & Dark Mode */}
+          {/* Search Target Mode Pills */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 self-start lg:self-auto overflow-x-auto shadow-2xs">
             <button
               type="button"
@@ -365,9 +542,9 @@ export default function ProductsManager({ initialProducts }: Props) {
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16 space-y-3">
             <Package className="w-12 h-12 mx-auto text-slate-400 dark:text-slate-600" />
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">No products match your search</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">No products match your search or filter</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              No results found for &ldquo;{searchQuery}&rdquo; in {searchField === 'all' ? 'all fields' : searchField}. Try searching by SKU, model number, or barcode.
+              No results found for &ldquo;{searchQuery || highlightFilter}&rdquo;. Try adjusting search filters or category.
             </p>
             {isFiltered && (
               <button
@@ -385,7 +562,7 @@ export default function ProductsManager({ initialProducts }: Props) {
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider bg-slate-50/50 dark:bg-navy-950/40">
                   <th className="py-3 px-3">Product Name &amp; SKU</th>
-                  <th className="py-3 px-3">Model &amp; Barcode</th>
+                  <th className="py-3 px-3">Homepage Showcase &amp; Promos</th>
                   <th className="py-3 px-3">Category</th>
                   <th className="py-3 px-3">Brand</th>
                   <th className="py-3 px-3 text-right">Cost Price</th>
@@ -396,14 +573,19 @@ export default function ProductsManager({ initialProducts }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {filteredProducts.map((p) => {
+                {filteredProducts.map((p, idx) => {
                   const margin =
                     p.selling_price > 0
                       ? (((p.selling_price - p.purchase_cost) / p.selling_price) * 100).toFixed(1)
                       : 0;
 
+                  const isTrending = Boolean(p.is_featured);
+                  const isHot = Boolean(p.is_hot);
+                  const isTrendingUpdating = updatingFlag?.id === p.id && updatingFlag.field === 'is_featured';
+                  const isHotUpdating = updatingFlag?.id === p.id && updatingFlag.field === 'is_hot';
+
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <tr key={`admin-prod-${p.id}-${idx}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       {/* Name, Image & SKU */}
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-3">
@@ -439,24 +621,48 @@ export default function ProductsManager({ initialProducts }: Props) {
                         </div>
                       </td>
 
-                      {/* Model & Barcode */}
+                      {/* Homepage Showcase & Promo Toggles */}
                       <td className="py-3 px-3">
-                        <div className="space-y-0.5">
-                          {p.model ? (
-                            <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-                              <span className="text-slate-400 dark:text-slate-500 text-[10px] mr-1">Model:</span>
-                              {highlightMatch(p.model, searchQuery)}
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 dark:text-slate-600 text-[11px]">&mdash;</span>
-                          )}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Trending Toggle Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFlag(p.id, 'is_featured', p.is_featured)}
+                            disabled={isTrendingUpdating}
+                            title={isTrending ? 'Click to remove from Homepage Trending section' : 'Click to feature in Homepage Trending section'}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
+                              isTrending
+                                ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700/80 shadow-2xs'
+                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-amber-950/40 dark:hover:text-amber-300'
+                            }`}
+                          >
+                            {isTrendingUpdating ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-amber-500" />
+                            ) : (
+                              <Star className={`w-3 h-3 ${isTrending ? 'fill-amber-500 text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                            )}
+                            <span>{isTrending ? 'Trending' : 'Add Trending'}</span>
+                          </button>
 
-                          {p.barcode ? (
-                            <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                              <Barcode className="w-3 h-3 text-slate-400 dark:text-slate-500" />
-                              <span>{highlightMatch(p.barcode, searchQuery)}</span>
-                            </div>
-                          ) : null}
+                          {/* Hot Deal Toggle Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFlag(p.id, 'is_hot', p.is_hot)}
+                            disabled={isHotUpdating}
+                            title={isHot ? 'Click to remove Hot Deal badge' : 'Click to add Hot Deal badge & promotion'}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
+                              isHot
+                                ? 'bg-rose-100 text-rose-900 border-rose-300 hover:bg-rose-200 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-700/80 shadow-2xs'
+                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-rose-950/40 dark:hover:text-rose-300'
+                            }`}
+                          >
+                            {isHotUpdating ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-rose-500" />
+                            ) : (
+                              <Flame className={`w-3 h-3 ${isHot ? 'fill-rose-500 text-rose-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                            )}
+                            <span>{isHot ? 'Hot Deal' : 'Add Hot Deal'}</span>
+                          </button>
                         </div>
                       </td>
 

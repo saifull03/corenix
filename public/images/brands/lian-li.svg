@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" fill="none">
+  <g transform="translate(15, 8)">
+    <rect x="0" y="4" width="24" height="24" rx="4" fill="#0284C7"/>
+    <text x="12" y="21" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="13" fill="#FFFFFF" text-anchor="middle">LL</text>
+    <text x="32" y="23" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#0284C7" letter-spacing="1.5">LIAN LI</text>
+  </g>
+</svg>

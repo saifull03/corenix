@@ -51,13 +51,13 @@ export default async function HomePage() {
      JOIN categories c ON p.category_id = c.id
      WHERE p.status = 'published'
      GROUP BY p.id
-     ORDER BY p.is_featured DESC, p.created_at DESC
+     ORDER BY (p.is_featured = 1 OR p.is_hot = 1) DESC, p.is_featured DESC, p.is_hot DESC, p.created_at DESC
      LIMIT 8`
   );
 
   // Fetch official brands
   const brands = await query<Brand[]>(
-    `SELECT id, name, slug, country, short_desc
+    `SELECT id, name, slug, logo, country, short_desc
      FROM brands
      WHERE is_active = 1
      ORDER BY is_featured DESC, name ASC LIMIT 10`
@@ -229,19 +229,28 @@ export default async function HomePage() {
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Direct procurement with verifiable serial numbers and manufacturer warranties.</p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
               {brands.map((b) => (
                 <Link
                   key={b.id}
                   href={`/brand/${b.slug}`}
-                  className="p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 hover:border-sky-500/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-all text-center group shadow-2xs hover:shadow-xs"
+                  title={b.name}
+                  className="h-24 p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 hover:border-sky-500/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-all text-center group shadow-2xs hover:shadow-md flex items-center justify-center"
                 >
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-brand-400 block transition-colors">
-                    {b.name}
-                  </span>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5 block">
-                    {b.country}
-                  </span>
+                  <div className="w-full h-full flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+                    {b.logo ? (
+                      <img
+                        src={b.logo}
+                        alt={`${b.name} logo`}
+                        className="max-h-10 max-w-[130px] object-contain"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200 group-hover:text-sky-600 dark:group-hover:text-brand-400 transition-colors">
+                        {b.name}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>

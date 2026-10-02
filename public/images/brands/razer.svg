@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" fill="none">
+  <g transform="translate(10, 8)">
+    <path d="M12 2c-5 0-9 4-9 9 0 3 1.5 5.5 3.8 7.2C5.5 20 4 23 4 26.5c0 1.2.3 2.3.8 3.3 2.2-1.5 4.8-2.4 7.2-2.4s5 .9 7.2 2.4c.5-1 .8-2.1.8-3.3 0-3.5-1.5-6.5-2.8-8.3 2.3-1.7 3.8-4.2 3.8-7.2 0-5-4-9-9-9zm0 4c2.8 0 5 2.2 5 5s-2.2 5-5 5-5-2.2-5-5 2.2-5 5-5z" fill="#00E700"/>
+    <text x="35" y="24" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="19" fill="#00E700" letter-spacing="3">RAZER</text>
+  </g>
+</svg>

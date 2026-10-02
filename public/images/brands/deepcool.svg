@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" fill="none">
+  <g transform="translate(8, 10)">
+    <rect x="0" y="4" width="7" height="7" rx="1.5" fill="#00B5B8"/>
+    <rect x="9" y="4" width="7" height="7" rx="1.5" fill="#00B5B8"/>
+    <rect x="9" y="13" width="7" height="7" rx="1.5" fill="#00B5B8"/>
+    <rect x="18" y="13" width="7" height="7" rx="1.5" fill="#00B5B8"/>
+    <rect x="18" y="22" width="7" height="7" rx="1.5" fill="#00B5B8"/>
+    <text x="34" y="22" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="17" fill="#00B5B8" letter-spacing="1.5">DEEPCOOL</text>
+  </g>
+</svg>

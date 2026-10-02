@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 70" fill="none">
+  <!-- G Mark -->
+  <g transform="translate(10, 4)">
+    <path d="M28 0C12.5 0 0 12.5 0 28C0 43.5 12.5 56 28 56L44 40C39.5 44 34 46 28 46C18 46 10 38 10 28C10 18 18 10 28 10C35 10 41 14 44 20H28V30H56V0H44L44 8C39.5 3 34 0 28 0Z" fill="#005BAC"/>
+    <!-- Red Triangle Accent -->
+    <polygon points="40,36 60,36 40,56" fill="#E30613"/>
+  </g>
+  <!-- GIGABYTE text -->
+  <text x="78" y="42" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="20" fill="#005BAC" letter-spacing="2">GIGABYTE</text>
+</svg>

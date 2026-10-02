@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   Plus,
@@ -15,6 +15,8 @@ import {
   Sparkles,
   Tag,
   Loader2,
+  Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export interface BrandItem {
@@ -65,6 +67,36 @@ export default function BrandsManager({ initialBrands }: Props) {
   const [formIsFeatured, setFormIsFeatured] = useState(false);
   const [formMetaTitle, setFormMetaTitle] = useState('');
   const [formMetaDesc, setFormMetaDesc] = useState('');
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+
+  // Upload logo directly
+  const handleLogoUpload = async (file: File) => {
+    setIsUploadingLogo(true);
+    setErrorMsg(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('folder', 'brands');
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: fd,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to upload logo');
+      }
+
+      setFormLogo(data.url);
+      showToast('Brand logo uploaded successfully!');
+    } catch (err: any) {
+      setErrorMsg('Logo upload failed: ' + err.message);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   // Handle Name Input -> Auto-slugify if user hasn't explicitly customized slug
   const handleNameChange = (val: string) => {
@@ -334,8 +366,12 @@ export default function BrandsManager({ initialBrands }: Props) {
                   <tr key={b.id} className="hover:bg-slate-800/40 transition-colors group">
                     <td className="py-3.5 px-4 font-bold text-white">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-black text-brand-400 text-xs flex-shrink-0 border border-slate-700/60">
-                          {b.name.slice(0, 2).toUpperCase()}
+                        <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center font-black text-brand-400 text-xs flex-shrink-0 border border-slate-700/60 overflow-hidden p-1">
+                          {b.logo ? (
+                            <img src={b.logo} alt={b.name} className="w-full h-full object-contain" />
+                          ) : (
+                            b.name.slice(0, 2).toUpperCase()
+                          )}
                         </div>
                         <div>
                           <div className="text-sm font-bold text-white group-hover:text-brand-300 transition-colors">
@@ -529,18 +565,85 @@ export default function BrandsManager({ initialBrands }: Props) {
                 </div>
               </div>
 
-              {/* Logo URL */}
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  Brand Logo Image URL (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://images.corenix.com/brands/thermalright.png"
-                  value={formLogo}
-                  onChange={(e) => setFormLogo(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-brand-500"
-                />
+              {/* Brand Logo Upload & Preview */}
+              <div className="space-y-2 p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/80">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-300 font-semibold text-xs flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-brand-400" />
+                    <span>Brand Logo (SVG, PNG, WebP, JPG)</span>
+                  </label>
+                  {formLogo && (
+                    <button
+                      type="button"
+                      onClick={() => setFormLogo('')}
+                      className="text-[11px] text-rose-400 hover:text-rose-300 font-bold"
+                    >
+                      Remove Logo
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                  {/* Live Logo Preview Box (Styled exactly like storefront ecosystem card) */}
+                  <div className="sm:col-span-4 h-20 rounded-xl bg-white dark:bg-navy-950 border border-slate-700 flex items-center justify-center p-3 shadow-inner relative overflow-hidden group">
+                    {formLogo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={formLogo}
+                        alt="Logo preview"
+                        className="max-h-12 max-w-full object-contain"
+                      />
+                    ) : (
+                      <div className="text-center text-slate-500 text-[11px] font-medium flex flex-col items-center gap-1">
+                        <ImageIcon className="w-5 h-5 opacity-40" />
+                        <span>No Logo Uploaded</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Actions */}
+                  <div className="sm:col-span-8 space-y-2">
+                    <input
+                      ref={logoFileRef}
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleLogoUpload(file);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => !isUploadingLogo && logoFileRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="px-3.5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-navy-950 font-bold text-xs flex items-center gap-1.5 shadow transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        {isUploadingLogo ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5" />
+                        )}
+                        <span>{isUploadingLogo ? 'Uploading...' : 'Upload Logo File'}</span>
+                      </button>
+
+                      <span className="text-[11px] text-slate-400">or paste image URL below</span>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="e.g. /uploads/brands/brand.svg or https://..."
+                      value={formLogo}
+                      onChange={(e) => setFormLogo(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500 font-mono"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Tagline / Short Desc */}

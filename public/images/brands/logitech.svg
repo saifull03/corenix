@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" fill="none">
+  <g transform="translate(8, 11)">
+    <circle cx="14" cy="14" r="13" stroke="#06B6D4" stroke-width="3" fill="none"/>
+    <circle cx="14" cy="14" r="5" fill="#06B6D4"/>
+    <text x="36" y="21" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="800" font-size="18" fill="#06B6D4" letter-spacing="1">logitech</text>
+  </g>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 50" fill="none">
+  <g transform="translate(10, 8)">
+    <path d="M15 0C6.7 0 0 6.7 0 15c0 6.5 4.1 12 10 14.1V34h10v-4.9c5.9-2.1 10-7.6 10-14.1C30 6.7 23.3 0 15 0z" fill="#DC2626"/>
+    <text x="38" y="24" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="800" font-size="17" fill="#DC2626" letter-spacing="1">Kingston</text>
+  </g>
+</svg>

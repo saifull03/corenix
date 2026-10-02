@@ -43,12 +43,11 @@ export async function GET(req: NextRequest) {
       `SELECT p.*,
               b.name as brand_name, b.slug as brand_slug,
               c.name as category_name, c.slug as category_slug,
-              pi.image_url as primary_image,
+              (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as primary_image,
               (SELECT SUM(quantity - reserved_qty) FROM inventory WHERE product_id = p.id) as total_stock
        FROM products p
        JOIN brands b ON p.brand_id = b.id
        JOIN categories c ON p.category_id = c.id
-       LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
        WHERE ${conditions.join(' AND ')}
        ORDER BY p.id DESC LIMIT ${limit}`,
       params
@@ -75,6 +74,7 @@ export async function POST(req: NextRequest) {
       selling_price,
       discount_price,
       is_featured = false,
+      is_hot = false,
       is_new = false,
       is_pc_builder = false,
       pc_builder_component = null,
@@ -107,25 +107,58 @@ export async function POST(req: NextRequest) {
     // 0b. Auto-resolve SKU uniqueness
     let baseSku = (sku || `SKU-${Date.now().toString(36).toUpperCase()}`).trim();
     let finalSku = baseSku;
-    let skuCounter = 1;
+    let slugSkuCounter = 1;
     while (true) {
       const existing = await query<any[]>(`SELECT id FROM products WHERE sku = ? LIMIT 1`, [finalSku]);
       if (!existing || existing.length === 0) break;
-      skuCounter++;
-      finalSku = `${baseSku}-${skuCounter}`;
+      slugSkuCounter++;
+      finalSku = `${baseSku}-${slugSkuCounter}`;
     }
 
     const discountAmount = discount_price ? selling_price - discount_price : 0;
     const discountPercent = discount_price ? Math.round((discountAmount / selling_price) * 100) : 0;
+
+    // Handle PC Builder component assignment
+    let finalIsPcBuilder = is_pc_builder ? 1 : 0;
+    let finalPcComponent: string | null = null;
+
+    if (finalIsPcBuilder) {
+      if (pc_builder_component) {
+        finalPcComponent = pc_builder_component;
+      } else if (category_id) {
+        const cat = await queryOne<any>(`SELECT slug, name FROM categories WHERE id = ?`, [category_id]);
+        if (cat) {
+          const cSlug = (cat.slug || '').toLowerCase();
+          const cName = (cat.name || '').toLowerCase();
+
+          // Only auto-resolve for genuine standalone components (never complete systems or laptops)
+          const isCompleteSystem = cSlug.includes('desktop-pc') || cSlug.includes('laptop') || cSlug.includes('brand-pc') || cSlug.includes('all-in-one');
+          if (!isCompleteSystem) {
+            if (cSlug.includes('ram') || cSlug.includes('memory') || cSlug.includes('ddr4') || cSlug.includes('ddr5') || (cName.includes('ram') && !cName.includes('laptop'))) finalPcComponent = 'ram';
+            else if (cSlug.includes('processor') || cSlug.includes('cpu') || (cName.includes('processor') && !cName.includes('desktop'))) finalPcComponent = 'cpu';
+            else if (cSlug.includes('motherboard') || cSlug.includes('mobo') || cName.includes('motherboard')) finalPcComponent = 'motherboard';
+            else if (cSlug.includes('cooler') || cSlug.includes('cooling') || cName.includes('cooler')) finalPcComponent = 'cooler';
+            else if (cSlug.includes('storage') || cSlug.includes('ssd') || cSlug.includes('hdd') || cSlug.includes('nvme') || cName.includes('ssd')) finalPcComponent = 'storage';
+            else if (cSlug.includes('graphics') || cSlug.includes('gpu') || cName.includes('graphics card')) finalPcComponent = 'gpu';
+            else if (cSlug.includes('power-supply') || cSlug.includes('psu') || cName.includes('power supply')) finalPcComponent = 'psu';
+            else if (cSlug.includes('casing') || cSlug.includes('case') || cSlug.includes('chassis') || cName.includes('casing')) finalPcComponent = 'case';
+            else if (cSlug.includes('monitor') || cSlug.includes('display') || cName.includes('monitor')) finalPcComponent = 'monitor';
+            else if (cSlug.includes('keyboard') || cName.includes('keyboard')) finalPcComponent = 'keyboard';
+            else if (cSlug.includes('mouse') || cSlug.includes('mice') || cName.includes('mouse')) finalPcComponent = 'mouse';
+            else if (cSlug.includes('ups') || cName.includes('ups')) finalPcComponent = 'ups';
+          }
+        }
+      }
+    }
 
     // 1. Insert product
     const pRes = await query<any>(
       `INSERT INTO products (
         name, slug, sku, model, brand_id, category_id, warranty_period,
         purchase_cost, avg_cost, selling_price, discount_price, min_selling_price,
-        discount_amount, discount_percent, is_featured, is_new, is_pc_builder,
+        discount_amount, discount_percent, is_featured, is_hot, is_new, is_pc_builder,
         pc_builder_component, seo_score
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 92)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 92)`,
       [
         name,
         finalSlug,
@@ -142,9 +175,10 @@ export async function POST(req: NextRequest) {
         discountAmount,
         discountPercent,
         is_featured ? 1 : 0,
+        is_hot ? 1 : 0,
         is_new ? 1 : 0,
-        is_pc_builder ? 1 : 0,
-        pc_builder_component || null,
+        finalIsPcBuilder ? 1 : 0,
+        finalPcComponent || null,
       ]
     );
 

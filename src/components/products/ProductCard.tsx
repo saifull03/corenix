@@ -21,13 +21,23 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="group relative bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800/80 hover:border-sky-500/50 dark:hover:border-brand-500/60 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-brand-500/10 flex flex-col justify-between">
       {/* Top badges: Discount & Status */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
+        {product.is_hot ? (
+          <span className="bg-gradient-to-r from-amber-500 to-rose-600 text-white font-extrabold text-[10px] uppercase px-2 py-0.5 rounded-md tracking-wider shadow-sm flex items-center gap-1">
+            <span>🔥 Hot Deal</span>
+          </span>
+        ) : null}
+        {product.is_featured ? (
+          <span className="bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-extrabold text-[10px] uppercase px-2 py-0.5 rounded-md tracking-wider shadow-sm flex items-center gap-1">
+            <span>⚡ Trending</span>
+          </span>
+        ) : null}
         {product.discount_price && product.discount_price < product.selling_price && (
           <span className="bg-rose-500 text-white font-bold text-[10px] uppercase px-2 py-0.5 rounded-md tracking-wider shadow-sm">
             Save ৳{discountAmount.toLocaleString()}
           </span>
         )}
-        {product.is_new && (
+        {product.is_new && !product.is_hot && !product.is_featured && (
           <span className="bg-sky-600 dark:bg-brand-500 text-white dark:text-navy-950 font-bold text-[10px] uppercase px-2 py-0.5 rounded-md tracking-wider shadow-sm">
             New Arrival
           </span>

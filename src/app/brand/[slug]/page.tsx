@@ -92,7 +92,7 @@ export default async function BrandPage({ params, searchParams }: Props) {
 
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
         {/* Brand Banner & Header */}
-        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-gradient-to-r dark:from-navy-900 dark:via-slate-900 dark:to-navy-900 border border-slate-200/80 dark:border-slate-800 mb-10 relative overflow-hidden shadow-xs">
+        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-gradient-to-r dark:from-navy-900 dark:via-slate-900 dark:to-navy-900 border border-slate-200/80 dark:border-slate-800 mb-10 relative overflow-hidden shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="max-w-3xl space-y-4">
             <div className="flex items-center gap-3">
               <span className="px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-brand-500/20 dark:text-brand-300 dark:border-brand-500/30 text-xs font-bold">
@@ -130,6 +130,17 @@ export default async function BrandPage({ params, searchParams }: Props) {
               </span>
             </div>
           </div>
+
+          {brand.logo && (
+            <div className="p-4 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex items-center justify-center sm:self-center min-w-[150px] max-w-[200px] h-24 sm:h-28">
+              <img
+                src={brand.logo}
+                alt={`${brand.name} logo`}
+                className="max-h-12 sm:max-h-16 max-w-[140px] object-contain"
+                loading="lazy"
+              />
+            </div>
+          )}
         </div>
 
         {/* Categories Bar for this Brand */}

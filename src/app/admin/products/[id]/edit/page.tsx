@@ -81,6 +81,7 @@ export default function EditProductPage() {
     warranty_period: '1 Year Official Warranty',
     status: 'published',
     is_featured: false,
+    is_hot: false,
     is_new: false,
     is_pc_builder: false,
     pc_builder_component: '',
@@ -160,6 +161,7 @@ export default function EditProductPage() {
           warranty_period: p.warranty_period || '1 Year Official Warranty',
           status: p.status || 'published',
           is_featured: Boolean(p.is_featured),
+          is_hot: Boolean(p.is_hot),
           is_new: Boolean(p.is_new),
           is_pc_builder: Boolean(p.is_pc_builder),
           pc_builder_component: p.pc_builder_component || '',
@@ -541,7 +543,7 @@ export default function EditProductPage() {
             </div>
 
             {/* Flags */}
-            <div className="flex items-center gap-6 pt-5">
+            <div className="flex items-center gap-6 pt-5 flex-wrap">
               <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
                 <input
                   type="checkbox"
@@ -550,7 +552,18 @@ export default function EditProductPage() {
                   onChange={handleChange}
                   className="rounded border-slate-300 dark:border-slate-700 text-brand-500 focus:ring-brand-400 w-4 h-4"
                 />
-                <span>Featured on Homepage</span>
+                <span>⭐ Featured / Trending on Homepage</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  name="is_hot"
+                  checked={formData.is_hot}
+                  onChange={handleChange}
+                  className="rounded border-slate-300 dark:border-slate-700 text-rose-500 focus:ring-rose-400 w-4 h-4"
+                />
+                <span>🔥 Hot Deal Badge</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -561,7 +574,7 @@ export default function EditProductPage() {
                   onChange={handleChange}
                   className="rounded border-slate-300 dark:border-slate-700 text-brand-500 focus:ring-brand-400 w-4 h-4"
                 />
-                <span>New Arrival Badge</span>
+                <span>✨ New Arrival Badge</span>
               </label>
             </div>
           </div>
@@ -632,6 +645,34 @@ export default function EditProductPage() {
                   <span>Enable for PC Customizer</span>
                 </label>
               </div>
+
+              {formData.is_pc_builder && (
+                <div className="pt-2">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                    Slot Assignment (Auto-detected from category if empty):
+                  </label>
+                  <select
+                    name="pc_builder_component"
+                    value={formData.pc_builder_component || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-900 dark:text-white"
+                  >
+                    <option value="">Auto-Detect from Category</option>
+                    <option value="cpu">Processor (CPU)</option>
+                    <option value="motherboard">Motherboard</option>
+                    <option value="cooler">CPU Cooler</option>
+                    <option value="ram">RAM (Desktop Memory)</option>
+                    <option value="storage">Storage (SSD / HDD)</option>
+                    <option value="gpu">Graphics Card (GPU)</option>
+                    <option value="psu">Power Supply (PSU)</option>
+                    <option value="case">PC Case / Casing</option>
+                    <option value="monitor">Monitor / Display</option>
+                    <option value="keyboard">Keyboard</option>
+                    <option value="mouse">Gaming Mouse</option>
+                    <option value="ups">UPS (Power Backup)</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>

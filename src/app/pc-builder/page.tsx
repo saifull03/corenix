@@ -140,7 +140,15 @@ export default function PcBuilderPage() {
     fetch('/api/products?limit=350')
       .then(res => res.json())
       .then(data => {
-        if (data.products) setAvailableProducts(data.products);
+        if (data.products && Array.isArray(data.products)) {
+          const uniqueMap = new Map();
+          data.products.forEach((prod: any) => {
+            if (prod && prod.id && !uniqueMap.has(prod.id)) {
+              uniqueMap.set(prod.id, prod);
+            }
+          });
+          setAvailableProducts(Array.from(uniqueMap.values()));
+        }
       })
       .catch(() => {});
 
@@ -151,241 +159,205 @@ export default function PcBuilderPage() {
     setQuotationDate(today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }));
   }, []);
 
-  // Strict helper to test if product matches the component slot
+  // Strict helper: ensure products match ONLY their designated category
   const isProductMatchForSlot = (p: any, slotKey: string): boolean => {
     const comp = (p.pc_builder_component || '').toLowerCase().trim();
     const catSlug = (p.category_slug || '').toLowerCase().trim();
     const catName = (p.category_name || '').toLowerCase().trim();
     const name = (p.name || '').toLowerCase().trim();
 
-    // 1. GLOBAL EXCLUSION: Complete pre-built systems & unrelated gear must NEVER appear in DIY component slots
-    const isCompleteSystemOrOther =
+    // 0. Primary Gate: If PC builder customizer is explicitly disabled or not a component, exclude
+    if (p.is_pc_builder === 0 || p.is_pc_builder === false || p.is_pc_builder === '0' || (!p.is_pc_builder && !p.pc_builder_component)) {
+      return false;
+    }
+
+    // 1. GLOBAL EXCLUSION: Complete pre-built systems, laptops, or non-DIY categories must NEVER leak
+    const isLaptop =
       catSlug.includes('laptop') ||
-      catName.includes('laptop') ||
-      catSlug.includes('desktop') ||
-      catName.includes('desktop') ||
-      catSlug.includes('aio') ||
-      catSlug.includes('all-in-one') ||
-      catName.includes('all-in-one') ||
+      catName.toLowerCase().includes('laptop') ||
+      name.includes('laptop') ||
+      name.includes('notebook') ||
+      name.includes('macbook');
+
+    if (isLaptop) {
+      return false;
+    }
+
+    const isCompletePrebuiltPC =
+      catSlug.includes('desktop-pc') ||
       catSlug.includes('brand-pc') ||
+      catSlug.includes('all-in-one') ||
+      catName.toLowerCase().includes('desktop pc') ||
+      catName.toLowerCase().includes('brand pc') ||
+      catName.toLowerCase().includes('all-in-one') ||
       catSlug.includes('mac-') ||
       catSlug.includes('apple-') ||
       catSlug.includes('imac') ||
       catSlug.includes('server') ||
-      catName.includes('server') ||
-      catSlug.includes('camera') ||
-      catSlug.includes('gadget') ||
-      catSlug.includes('watch') ||
-      catSlug.includes('earbuds') ||
+      catName.toLowerCase().includes('server') ||
       catSlug.includes('software') ||
-      catSlug.includes('console') ||
-      catSlug.includes('chair') ||
-      catSlug.includes('desk') ||
       name.includes('desktop pc') ||
       name.includes('brand desktop') ||
+      name.includes('commercial desktop') ||
+      name.includes('prodesk') ||
+      name.includes('elitedesk') ||
+      name.includes('thinkcentre') ||
+      name.includes('optiplex') ||
+      name.includes('vostro') ||
+      name.includes('omen 45l') ||
+      name.includes('expertcenter') ||
+      name.includes('alienware aurora') ||
+      name.includes('ideacentre') ||
+      name.includes('legion tower') ||
       name.includes('mini tower') ||
       name.includes('sff pc') ||
       name.includes('gaming desktop') ||
       name.includes('all-in-one') ||
       name.includes('mac mini') ||
       name.includes('mac studio') ||
-      name.includes('imac') ||
-      name.includes('thinkcentre') ||
-      name.includes('optiplex') ||
-      name.includes('vostro') ||
-      name.includes('omen 45l') ||
-      name.includes('pro tower') ||
-      name.includes('prodesk') ||
-      name.includes('expertcenter') ||
-      name.includes('rog strix g16chr') ||
-      name.includes('alienware aurora') ||
-      name.includes('ideacentre') ||
-      name.includes('legion tower') ||
-      name.includes('laptop') ||
-      name.includes('notebook') ||
-      name.includes('macbook');
+      name.includes('imac');
 
-    if (isCompleteSystemOrOther) {
+    if (isCompletePrebuiltPC) {
       return false;
     }
 
     // Normalize secondary slots
     const targetSlot = slotKey === 'ram2' ? 'ram' : slotKey === 'storage2' ? 'storage' : slotKey;
 
-    // 2. Explicit pc_builder_component matching
-    if (comp) {
-      return comp === targetSlot.toLowerCase();
-    }
-
-    // 3. Exact slot rules & category/attribute matching
+    // Strict slot-to-category whitelist
     switch (targetSlot) {
       case 'cpu': {
-        if (
-          name.includes('cooler') ||
-          name.includes('cooling') ||
-          catSlug.includes('cooler') ||
-          catName.includes('cooler') ||
-          name.includes('fan') ||
-          name.includes('liquid') ||
-          name.includes('aio') ||
-          name.includes('motherboard') ||
-          catSlug.includes('motherboard') ||
-          name.includes('desktop') ||
-          name.includes('pc') ||
-          catSlug.includes('desktop')
-        ) {
-          return false;
-        }
+        if (catSlug.includes('cooler') || catName.toLowerCase().includes('cooler') || name.includes('cooler') || name.includes('motherboard') || catSlug.includes('motherboard')) return false;
         return (
-          catSlug === 'processor' ||
-          catSlug === 'processors' ||
-          catSlug === 'cpu' ||
+          comp === 'cpu' ||
+          catSlug.includes('processor') ||
+          catSlug.includes('cpu') ||
           catName.toLowerCase().includes('processor') ||
-          catName.toLowerCase().includes('cpu') ||
-          (name.includes('processor') && !name.includes('cooler'))
+          catName.toLowerCase().includes('cpu')
         );
       }
 
       case 'motherboard': {
-        if (
-          name.includes('cooler') ||
-          name.includes('processor') ||
-          catSlug.includes('processor') ||
-          name.includes('desktop') ||
-          catSlug.includes('desktop')
-        ) {
-          return false;
-        }
+        if (catSlug.includes('processor') || catName.includes('processor') || catSlug.includes('cooler') || catSlug.includes('ram')) return false;
         return (
+          comp === 'motherboard' ||
           catSlug.includes('motherboard') ||
           catSlug.includes('mobo') ||
-          catName.includes('motherboard') ||
-          name.includes('motherboard')
+          catName.includes('motherboard')
         );
       }
 
       case 'cooler': {
         return (
+          comp === 'cooler' ||
           catSlug.includes('cooler') ||
           catSlug.includes('cooling') ||
-          catName.includes('cooler') ||
-          catName.includes('cooling') ||
-          name.includes('cooler') ||
-          name.includes('liquid cooling') ||
-          name.includes('aio') ||
-          name.includes('cpu cooler')
+          catSlug.includes('aio') ||
+          catName.includes('cooler')
         );
       }
 
       case 'ram': {
-        if (name.includes('graphics') || name.includes('ssd') || catSlug.includes('storage')) return false;
+        if (catSlug.includes('motherboard') || catName.includes('motherboard') || catSlug.includes('case') || catSlug.includes('gpu') || catSlug.includes('graphics') || catSlug.includes('laptop') || catSlug.includes('server')) return false;
         return (
+          comp === 'ram' ||
           catSlug.includes('ram') ||
           catSlug.includes('memory') ||
           catName.includes('ram') ||
           catName.includes('memory') ||
-          name.includes('desktop ram') ||
           name.includes('ddr5') ||
-          name.includes('ddr4')
+          name.includes('ddr4') ||
+          name.includes('desktop ram')
         );
       }
 
       case 'storage': {
-        if (name.includes('ram') || catSlug.includes('ram')) return false;
+        if (catSlug.includes('ram') || catName.includes('ram') || catSlug.includes('motherboard') || catSlug.includes('gpu')) return false;
         return (
+          comp === 'storage' ||
           catSlug.includes('storage') ||
           catSlug.includes('ssd') ||
           catSlug.includes('hdd') ||
-          catSlug.includes('hard-disk') ||
-          catSlug.includes('drive') ||
+          catSlug.includes('nvme') ||
+          catSlug.includes('m2') ||
           catName.includes('storage') ||
           catName.includes('ssd') ||
-          name.includes('ssd') ||
-          name.includes('nvme') ||
-          name.includes('m.2') ||
-          name.includes('internal storage')
+          catName.includes('hard drive')
         );
       }
 
       case 'gpu': {
         return (
+          comp === 'gpu' ||
           catSlug.includes('graphics') ||
           catSlug.includes('gpu') ||
           catSlug.includes('video-card') ||
-          catName.includes('graphics') ||
-          catName.includes('gpu') ||
-          name.includes('graphics card') ||
-          name.includes('geforce') ||
-          name.includes('rtx') ||
-          name.includes('radeon')
+          catName.includes('graphics card') ||
+          catName.includes('geforce') ||
+          catName.includes('radeon')
         );
       }
 
       case 'psu': {
         if (catSlug.includes('ups') || catName.includes('ups') || name.includes('ups')) return false;
         return (
+          comp === 'psu' ||
           catSlug.includes('power-supply') ||
           catSlug.includes('psu') ||
-          catName.includes('power supply') ||
-          catName.includes('psu') ||
-          name.includes('power supply') ||
-          name.includes('80 plus')
+          catName.includes('power supply')
         );
       }
 
       case 'case': {
-        if (name.includes('phone') || name.includes('earphone') || name.includes('bag')) return false;
         return (
+          comp === 'case' ||
           catSlug.includes('casing') ||
           catSlug.includes('pc-case') ||
           catSlug.includes('case') ||
           catSlug.includes('chassis') ||
-          catName.includes('case') ||
           catName.includes('casing') ||
-          name.includes('pc case') ||
-          name.includes('casing') ||
-          name.includes('mid-tower')
+          catName.includes('pc case')
         );
       }
 
       case 'monitor': {
         return (
+          comp === 'monitor' ||
           catSlug.includes('monitor') ||
           catSlug.includes('display') ||
-          catName.includes('monitor') ||
-          catName.includes('display') ||
-          name.includes('monitor')
+          catName.includes('monitor')
         );
       }
 
       case 'keyboard': {
         return (
+          comp === 'keyboard' ||
           catSlug.includes('keyboard') ||
-          catName.includes('keyboard') ||
-          name.includes('keyboard')
+          catName.includes('keyboard')
         );
       }
 
       case 'mouse': {
         if (name.includes('mousepad') || name.includes('mouse pad')) return false;
         return (
+          comp === 'mouse' ||
+          catSlug.includes('gaming-mouse') ||
           catSlug.includes('mouse') ||
-          catName.includes('mouse') ||
-          name.includes('gaming mouse') ||
-          name.includes('wireless mouse')
+          catSlug.includes('mice') ||
+          catName.includes('mouse')
         );
       }
 
       case 'ups': {
         return (
+          comp === 'ups' ||
           catSlug.includes('ups') ||
-          catName.includes('ups') ||
-          name.includes('ups')
+          catName.includes('ups')
         );
       }
 
       default:
-        return true;
+        return comp === targetSlot;
     }
   };
 
@@ -421,7 +393,13 @@ export default function PcBuilderPage() {
       return (b.id || 0) - (a.id || 0);
     });
 
-    return list;
+    // 5. Ensure uniqueness by ID
+    const seen = new Set<number>();
+    return list.filter(p => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
   }, [availableProducts, selectingSlot, modalBrandFilter, modalSearch, modalSort]);
 
   // Unique brands in the current slot modal
@@ -622,131 +600,131 @@ export default function PcBuilderPage() {
         <Navbar />
       </div>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full print:p-0 print:m-0 print:max-w-none">
+      <main className="flex-1 max-w-5xl mx-auto px-4 py-6 w-full print:p-0 print:m-0 print:max-w-none">
         {/* Header Section (Hidden in print) */}
-        <div className="print:hidden p-6 sm:p-8 rounded-3xl bg-white dark:bg-gradient-to-r dark:from-navy-900 dark:via-slate-900 dark:to-navy-900 border border-slate-200/80 dark:border-slate-800 mb-8 flex items-center justify-between flex-wrap gap-4 shadow-xs">
+        <div className="print:hidden p-5 sm:p-6 rounded-2xl bg-white dark:bg-gradient-to-r dark:from-navy-900 dark:via-slate-900 dark:to-navy-900 border border-slate-200/80 dark:border-slate-800 mb-6 flex items-center justify-between flex-wrap gap-4 shadow-xs">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 dark:bg-brand-500/10 border border-sky-200 dark:border-brand-500/30 text-sky-700 dark:text-brand-300 text-xs font-bold mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Real-Time Hardware Compatibility Engine • Dual RAM & Storage Support</span>
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-sky-50 dark:bg-brand-500/10 border border-sky-200 dark:border-brand-500/30 text-sky-700 dark:text-brand-300 text-[11px] font-bold mb-1.5">
+              <Sparkles className="w-3 h-3" />
+              <span>Real-Time Hardware Compatibility • Dual RAM & Storage Support</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
               CORENIX Custom PC Builder
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-              Choose your components with dual-channel RAM & secondary storage support. Export clean 1-page PDF Quotations, share builds, or order assembled with official brand warranty.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-xl">
+              Configure your build with instant wattage calculations, export 1-page PDF Quotations, or order assembled.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Toggle Hide Unselected */}
             <button
               onClick={() => setHideUnselected(!hideUnselected)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border ${
                 hideUnselected
                   ? 'bg-sky-50 border-sky-300 text-sky-700 dark:bg-brand-500/20 dark:border-brand-500/40 dark:text-brand-300 shadow-2xs'
                   : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
               title="Toggle to hide empty/unselected component slots"
             >
-              {hideUnselected ? <EyeOff className="w-4 h-4 text-sky-600 dark:text-brand-400" /> : <Eye className="w-4 h-4" />}
-              <span>{hideUnselected ? 'Showing Selected Only' : 'Hide Missing Slots'}</span>
-              <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white dark:bg-navy-900 text-[10px] font-mono">
+              {hideUnselected ? <EyeOff className="w-3.5 h-3.5 text-sky-600 dark:text-brand-400" /> : <Eye className="w-3.5 h-3.5" />}
+              <span>{hideUnselected ? 'Selected Only' : 'Hide Missing'}</span>
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-white dark:bg-navy-900 text-[10px] font-mono">
                 {selectedCount}/{slots.length}
               </span>
             </button>
 
             <button
               onClick={handleShare}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-slate-700"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-slate-700"
             >
-              <Share2 className="w-4 h-4" />
-              <span>Share Build</span>
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Share</span>
             </button>
 
             {/* Official Quotation & Print PDF Button */}
             <button
               onClick={handleOpenQuotation}
-              className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs flex items-center gap-2 transition-all shadow-sm hover:shadow-md"
+              className="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm hover:shadow-md"
             >
-              <FileText className="w-4 h-4" />
-              <span>Print / Save PDF Quotation</span>
+              <FileText className="w-3.5 h-3.5" />
+              <span>Save PDF Quotation</span>
             </button>
           </div>
         </div>
 
         {/* Compatibility Bar & Summary Cards (Hidden in print) */}
-        <div className="print:hidden grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+        <div className="print:hidden grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Compatibility Box */}
-          <div className="lg:col-span-4 p-5 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3.5 shadow-xs">
-            <div className={`p-2.5 rounded-2xl flex-shrink-0 ${
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-start gap-3 shadow-xs">
+            <div className={`p-2 rounded-xl flex-shrink-0 ${
               compatibilityStatus === 'compatible'
                 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
                 : compatibilityStatus === 'warning'
                 ? 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
                 : 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400'
             }`}>
-              {compatibilityStatus === 'compatible' && <CheckCircle2 className="w-5 h-5" />}
-              {compatibilityStatus === 'warning' && <AlertTriangle className="w-5 h-5" />}
-              {compatibilityStatus === 'incompatible' && <XCircle className="w-5 h-5" />}
+              {compatibilityStatus === 'compatible' && <CheckCircle2 className="w-4 h-4" />}
+              {compatibilityStatus === 'warning' && <AlertTriangle className="w-4 h-4" />}
+              {compatibilityStatus === 'incompatible' && <XCircle className="w-4 h-4" />}
             </div>
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                Compatibility Status: {compatibilityStatus.toUpperCase()}
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                Status: {compatibilityStatus.toUpperCase()}
               </span>
-              <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mt-1 leading-relaxed">
+              <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mt-0.5 leading-snug">
                 {compatibilityMessage}
               </p>
             </div>
           </div>
 
           {/* Wattage Calculation */}
-          <div className="lg:col-span-4 p-5 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between shadow-xs">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between shadow-xs">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                 Estimated Power Draw
               </span>
-              <div className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+              <div className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
                 {totalWattage}W
               </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
                 Recommended PSU: <strong>{recommendedPsuWattage}W+</strong>
               </span>
             </div>
-            <div className="p-3 rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
-              <Zap className="w-6 h-6" />
+            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+              <Zap className="w-5 h-5" />
             </div>
           </div>
 
           {/* Pricing & Add to Cart */}
-          <div className="lg:col-span-4 p-5 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-4 shadow-xs">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3 shadow-xs">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                 Total Build Price
               </span>
-              <div className="text-2xl font-black text-sky-600 dark:text-brand-400 mt-0.5">
+              <div className="text-xl font-black text-sky-600 dark:text-brand-400 mt-0.5">
                 ৳{totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                {selectedCount} item{selectedCount === 1 ? '' : 's'} • VAT Included • Free Assembly
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                {selectedCount} item{selectedCount === 1 ? '' : 's'} • VAT Included
               </span>
             </div>
 
             <button
               onClick={handleAddToCart}
-              className="px-5 py-3 rounded-2xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs flex items-center gap-2 transition-all shadow hover:shadow-lg flex-shrink-0"
+              className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow hover:shadow-lg flex-shrink-0"
             >
-              <ShoppingCart className="w-4 h-4" />
-              <span>Add All to Cart</span>
+              <ShoppingCart className="w-3.5 h-3.5" />
+              <span>Add All</span>
             </button>
           </div>
         </div>
 
         {/* Filter / Status notification bar */}
-        <div className="print:hidden flex items-center justify-between mb-4 px-2 flex-wrap gap-2">
+        <div className="print:hidden flex items-center justify-between mb-3 px-1 flex-wrap gap-2">
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             Showing <strong className="text-slate-800 dark:text-slate-200">{visibleSlots.length}</strong> {visibleSlots.length === 1 ? 'component slot' : 'component slots'}
-            {hideUnselected && <span> (filtered to configured parts only)</span>}
+            {hideUnselected && <span> (filtered)</span>}
           </div>
 
           <div className="flex items-center gap-3">
@@ -755,7 +733,7 @@ export default function PcBuilderPage() {
               className="text-xs text-sky-600 dark:text-brand-400 font-bold flex items-center gap-1 hover:underline"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span>Add Custom Component Slot</span>
+              <span>Add Custom Slot</span>
             </button>
 
             {hideUnselected && (
@@ -771,18 +749,18 @@ export default function PcBuilderPage() {
 
         {/* Add Custom Component Slot Form */}
         {showAddCustomSlot && (
-          <div className="print:hidden p-4 rounded-2xl bg-sky-50/70 dark:bg-navy-900 border border-sky-200 dark:border-slate-700 mb-6 flex items-center gap-3 flex-wrap animate-fadeIn">
+          <div className="print:hidden p-3.5 rounded-xl bg-sky-50/70 dark:bg-navy-900 border border-sky-200 dark:border-slate-700 mb-4 flex items-center gap-2.5 flex-wrap animate-fadeIn">
             <input
               type="text"
               value={customSlotName}
               onChange={e => setCustomSlotName(e.target.value)}
-              placeholder="Custom slot name (e.g. Extra Case Fan, Sound Card, Capture Card)"
-              className="flex-1 min-w-[240px] px-3.5 py-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-white"
+              placeholder="Custom slot name (e.g. Extra Fan, Sound Card, Capture Card)"
+              className="flex-1 min-w-[220px] px-3 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-white"
             />
             <select
               value={customSlotCategory}
               onChange={e => setCustomSlotCategory(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300"
+              className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300"
             >
               <option value="accessories">Accessories / Other</option>
               <option value="cooler">Cooling Fan</option>
@@ -791,13 +769,13 @@ export default function PcBuilderPage() {
             </select>
             <button
               onClick={handleAddCustomSlot}
-              className="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs hover:bg-sky-500"
+              className="px-3 py-1.5 rounded-lg bg-sky-600 text-white font-bold text-xs hover:bg-sky-500"
             >
               Add Slot
             </button>
             <button
               onClick={() => setShowAddCustomSlot(false)}
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 text-xs"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 text-xs"
             >
               Cancel
             </button>
@@ -805,7 +783,7 @@ export default function PcBuilderPage() {
         )}
 
         {/* Component Slots Grid (Interactive View) */}
-        <div className="print:hidden space-y-3.5 mb-16">
+        <div className="print:hidden space-y-2 mb-12">
           {visibleSlots.map((slot) => {
             const Icon = slot.icon;
             const priceNum = slot.product ? Number(slot.product.discount_price || slot.product.selling_price || 0) : 0;
@@ -813,44 +791,44 @@ export default function PcBuilderPage() {
             return (
               <div
                 key={slot.key}
-                className={`p-4 rounded-2xl bg-white dark:bg-navy-900 border transition-all shadow-xs ${
+                className={`px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-white dark:bg-navy-900 border transition-all shadow-2xs ${
                   slot.product
-                    ? 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-900'
+                    ? 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-slate-600'
                     : 'border-dashed border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center justify-between gap-3">
                   {/* Left: Slot Type */}
-                  <div className="flex items-center gap-3.5 w-72">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  <div className="flex items-center gap-2.5 w-48 sm:w-56 flex-shrink-0">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       slot.product
                         ? 'bg-sky-50 text-sky-600 dark:bg-brand-500/10 dark:text-brand-400 border border-sky-100 dark:border-brand-500/30'
                         : 'bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700/60'
                     }`}>
-                      <Icon className="w-5 h-5" />
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
                         {slot.name}
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {slot.required ? 'Mandatory Component' : slot.isCustom ? 'Custom Item' : 'Optional Upgrade'}
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                        {slot.required ? 'Required' : slot.isCustom ? 'Custom' : 'Optional'}
                       </span>
                     </div>
                   </div>
 
                   {/* Middle: Selected Product Details or Placeholder */}
-                  <div className="flex-1 min-w-[220px]">
+                  <div className="flex-1 min-w-0 px-1">
                     {slot.product ? (
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={slot.product.primary_image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=200&q=80'}
                           alt={slot.product.name}
-                          className="w-12 h-12 object-contain bg-slate-50 dark:bg-navy-950 rounded-lg p-1 border border-slate-200 dark:border-slate-800 flex-shrink-0"
+                          className="w-9 h-9 object-contain bg-slate-50 dark:bg-navy-950 rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 flex-shrink-0"
                         />
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-1">
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                             {slot.product.name}
                           </h4>
                           <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -858,48 +836,42 @@ export default function PcBuilderPage() {
                               ৳{priceNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                             <span>•</span>
-                            <span>{slot.product.warranty_period || '1 Year Official'}</span>
-                            {slot.product.sku && (
-                              <>
-                                <span>•</span>
-                                <span className="font-mono text-[10px]">SKU: {slot.product.sku}</span>
-                              </>
-                            )}
+                            <span className="truncate">{slot.product.warranty_period || '1 Year Official'}</span>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-400 dark:text-slate-500 italic flex items-center gap-1.5">
-                        <span>No component selected</span>
-                        {slot.required && <span className="text-rose-500 text-[11px] font-semibold">(Required for complete PC)</span>}
+                      <div className="text-xs text-slate-400 dark:text-slate-500 italic flex items-center gap-1.5 truncate">
+                        <span>Not selected</span>
+                        {slot.required && <span className="text-rose-500 text-[10px] font-semibold">(Required)</span>}
                       </div>
                     )}
                   </div>
 
-                  {/* Right: Actions - Fixed width & height for identical size across all rows */}
-                  <div className="w-48 flex items-center justify-end gap-2 flex-shrink-0">
+                  {/* Right: Actions */}
+                  <div className="w-36 sm:w-40 flex items-center justify-end gap-1.5 flex-shrink-0">
                     {slot.product ? (
                       <>
                         <button
                           onClick={() => { setSelectingSlot(slot.key); setModalSearch(''); setModalBrandFilter('all'); }}
-                          className="flex-1 h-10 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-2xs"
+                          className="flex-1 h-8 sm:h-8.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-2xs"
                         >
                           Change
                         </button>
                         <button
                           onClick={() => handleRemoveProduct(slot.key)}
-                          className="h-10 w-10 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400 transition-colors flex items-center justify-center flex-shrink-0 border border-rose-200 dark:border-rose-900/50 shadow-2xs"
+                          className="h-8 sm:h-8.5 w-8 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400 transition-colors flex items-center justify-center flex-shrink-0 border border-rose-200 dark:border-rose-900/50 shadow-2xs"
                           title="Remove component"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </>
                     ) : (
                       <button
                         onClick={() => { setSelectingSlot(slot.key); setModalSearch(''); setModalBrandFilter('all'); }}
-                        className="w-full h-10 px-4 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-brand-500/10 dark:hover:bg-brand-500/20 border border-sky-200 dark:border-brand-500/30 text-sky-700 dark:text-brand-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs hover:shadow-xs"
+                        className="w-full h-8 sm:h-8.5 px-3 rounded-lg bg-sky-50 hover:bg-sky-100 dark:bg-brand-500/10 dark:hover:bg-brand-500/20 border border-sky-200 dark:border-brand-500/30 text-sky-700 dark:text-brand-300 font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-2xs hover:shadow-xs"
                       >
-                        <Plus className="w-4 h-4 shrink-0" />
+                        <Plus className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">Choose {slot.categoryLabel}</span>
                       </button>
                     )}
@@ -907,10 +879,10 @@ export default function PcBuilderPage() {
                     {slot.isCustom && (
                       <button
                         onClick={() => handleDeleteCustomSlot(slot.key)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 ml-1"
+                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 ml-0.5"
                         title="Delete custom slot"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -1034,14 +1006,14 @@ export default function PcBuilderPage() {
               {/* Modal Products List */}
               <div className="p-4 overflow-y-auto space-y-3 flex-1 divide-y divide-slate-100 dark:divide-slate-800/60">
                 {slotFilteredProducts.length > 0 ? (
-                  slotFilteredProducts.map((p) => {
+                  slotFilteredProducts.map((p, pIdx) => {
                     const price = Number(p.discount_price || p.selling_price || 0);
                     const originalPrice = Number(p.selling_price || 0);
                     const hasDiscount = p.discount_price && Number(p.discount_price) < originalPrice;
 
                     return (
                       <div
-                        key={p.id}
+                        key={`${p.id || 'prod'}-${pIdx}`}
                         className="pt-3 first:pt-0 p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-4 transition-all"
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -1171,93 +1143,162 @@ export default function PcBuilderPage() {
                 </div>
               </div>
 
+              {/* Dedicated Print & A4 Page Isolation Styles */}
+              <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                  @page {
+                    size: A4 portrait;
+                    margin: 8mm 10mm 8mm 10mm !important;
+                  }
+                  html, body {
+                    background: #ffffff !important;
+                    color: #0f172a !important;
+                    font-size: 10pt !important;
+                    line-height: 1.3 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    width: 100% !important;
+                    height: auto !important;
+                    overflow: visible !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                  }
+                  .print\\:hidden, header, footer, nav {
+                    display: none !important;
+                  }
+                  .fixed.inset-0 {
+                    position: static !important;
+                    background: transparent !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    display: block !important;
+                    overflow: visible !important;
+                  }
+                  .fixed.inset-0 > div {
+                    max-width: 100% !important;
+                    max-height: none !important;
+                    background: #ffffff !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: visible !important;
+                  }
+                  #quotation-printable {
+                    display: block !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                    color: #0f172a !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    overflow: visible !important;
+                  }
+                  #quotation-printable table {
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                  }
+                  #quotation-printable tr {
+                    page-break-inside: avoid !important;
+                  }
+                  #quotation-printable th, #quotation-printable td {
+                    padding: 4px 6px !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                  }
+                }
+              `}} />
+
               {/* Printable Quotation Content (Engineered for Exact 1-Page A4 Precision) */}
-              <div id="quotation-printable" className="p-6 sm:p-8 overflow-y-auto flex-1 bg-white text-slate-900 font-sans text-xs leading-tight">
+              <div id="quotation-printable" className="p-6 sm:p-8 overflow-y-auto flex-1 bg-white text-slate-900 font-sans text-xs leading-normal">
                 {/* Quotation Header with Brand Logo & Company Info */}
                 <div className="flex items-start justify-between border-b-2 border-slate-900 pb-3 mb-3">
                   <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <div className="w-7 h-7 rounded-md bg-sky-600 flex items-center justify-center text-white font-black text-sm shadow-xs">
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <div className="w-8 h-8 rounded-lg bg-sky-600 flex items-center justify-center text-white font-black text-base shadow-sm">
                         C
                       </div>
-                      <h2 className="text-xl font-black tracking-tight text-slate-900">
+                      <h2 className="text-2xl font-black tracking-tight text-slate-950">
                         CORENIX COMPUTERS & TECH LTD.
                       </h2>
                     </div>
-                    <p className="text-[10px] font-bold text-sky-700 uppercase tracking-wider">
+                    <p className="text-xs font-bold text-sky-700 uppercase tracking-wider mb-1">
                       Official IT Hardware Distributor & High-Performance Custom PC System Integrator
                     </p>
-                    <div className="text-[9.5px] text-slate-600 flex items-center gap-3 mt-1 flex-wrap">
+                    <div className="text-[11px] text-slate-700 font-medium flex items-center gap-3.5 flex-wrap">
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-slate-500" />
+                        <MapPin className="w-3.5 h-3.5 text-slate-600" />
                         Multiplan Center, Level 4 & Level 6, Dhaka-1205
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-slate-500" />
+                        <Phone className="w-3.5 h-3.5 text-slate-600" />
                         +880 1700-000000
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Globe className="w-3 h-3 text-slate-500" />
+                        <Globe className="w-3.5 h-3.5 text-slate-600" />
                         https://corenix.com.bd
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="inline-block px-2.5 py-0.5 rounded bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest mb-1">
+                    <div className="inline-block px-3 py-1 rounded bg-slate-900 text-white font-black text-xs uppercase tracking-widest mb-1.5 shadow-xs">
                       PC BUILD QUOTATION
                     </div>
-                    <div className="text-[10px] space-y-0.5">
-                      <p><span className="text-slate-500 font-medium">Quote Ref:</span> <span className="font-mono font-bold">{quotationRefNumber}</span></p>
-                      <p><span className="text-slate-500 font-medium">Date:</span> <span className="font-bold">{quotationDate}</span></p>
-                      <p><span className="text-slate-500 font-medium">Validity:</span> <span>7 Days</span></p>
+                    <div className="text-[11.5px] space-y-0.5 font-medium">
+                      <p><span className="text-slate-500">Quote Ref:</span> <span className="font-mono font-bold text-slate-950">{quotationRefNumber}</span></p>
+                      <p><span className="text-slate-500">Date:</span> <span className="font-bold text-slate-950">{quotationDate}</span></p>
+                      <p><span className="text-slate-500">Validity:</span> <span className="font-bold text-emerald-700">7 Days Official</span></p>
                     </div>
                   </div>
                 </div>
 
                 {/* Customer Info & System Wattage Banner */}
-                <div className="bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 mb-3 flex items-center justify-between gap-4 text-[10px]">
+                <div className="bg-slate-50 border border-slate-300 rounded-lg py-2 px-3.5 mb-3 flex items-center justify-between gap-4 text-xs">
                   <div className="flex-1">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider block text-[9px]">Prepared For:</span>
+                    <span className="font-bold text-slate-500 uppercase tracking-wider block text-[10px] mb-0.5">Prepared For:</span>
                     <input
                       type="text"
                       value={quotationCustomerName}
                       onChange={e => setQuotationCustomerName(e.target.value)}
                       placeholder="Customer / Organization Name"
-                      className="font-bold text-xs text-slate-900 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-sky-600 px-0.5 py-0 w-full"
+                      className="font-bold text-sm text-slate-950 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-sky-600 px-0.5 py-0 w-full"
                     />
                   </div>
 
                   <div className="flex-1">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider block text-[9px]">Phone / Contact:</span>
+                    <span className="font-bold text-slate-500 uppercase tracking-wider block text-[10px] mb-0.5">Phone / Contact:</span>
                     <input
                       type="text"
                       value={quotationCustomerPhone}
                       onChange={e => setQuotationCustomerPhone(e.target.value)}
                       placeholder="+880 1XXXXXXXXX"
-                      className="font-medium text-xs text-slate-800 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-sky-600 px-0.5 py-0 w-full"
+                      className="font-medium text-sm text-slate-900 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-sky-600 px-0.5 py-0 w-full"
                     />
                   </div>
 
                   <div className="text-right">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider block text-[9px]">System Power & Status:</span>
-                    <span className="font-bold text-slate-900 text-[11px]">{totalWattage}W (PSU Rec: {recommendedPsuWattage}W+) • <span className="text-emerald-700">Tested OK</span></span>
+                    <span className="font-bold text-slate-500 uppercase tracking-wider block text-[10px] mb-0.5">System Power & Status:</span>
+                    <span className="font-bold text-slate-950 text-xs">{totalWattage}W (PSU Rec: {recommendedPsuWattage}W+) • <span className="text-emerald-700 font-black">Verified Compatible</span></span>
                   </div>
                 </div>
 
                 {/* Component Table (Ultra-clean single page layout) */}
-                <table className="w-full border-collapse border border-slate-400 text-[10px] mb-3">
+                <table className="w-full border-collapse border border-slate-400 text-[11px] mb-3">
                   <thead>
-                    <tr className="bg-slate-900 text-white font-bold">
+                    <tr className="bg-slate-900 text-white font-bold text-[11.5px]">
                       <th className="border border-slate-700 py-1.5 px-2 w-8 text-center">#</th>
-                      <th className="border border-slate-700 py-1.5 px-2 w-32 text-left">Slot</th>
-                      <th className="border border-slate-700 py-1.5 px-2 text-left">Product Description, Model & SKU</th>
-                      <th className="border border-slate-700 py-1.5 px-2 w-24 text-left">Warranty</th>
+                      <th className="border border-slate-700 py-1.5 px-2.5 w-36 text-left">Slot</th>
+                      <th className="border border-slate-700 py-1.5 px-2.5 text-left">Product Description, Model & SKU</th>
+                      <th className="border border-slate-700 py-1.5 px-2.5 w-32 text-left">Warranty</th>
                       <th className="border border-slate-700 py-1.5 px-1.5 w-10 text-center">Qty</th>
-                      <th className="border border-slate-700 py-1.5 px-2 w-24 text-right">Unit (৳)</th>
-                      <th className="border border-slate-700 py-1.5 px-2 w-24 text-right">Total (৳)</th>
+                      <th className="border border-slate-700 py-1.5 px-2.5 w-24 text-right">Unit (৳)</th>
+                      <th className="border border-slate-700 py-1.5 px-2.5 w-24 text-right">Total (৳)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1266,19 +1307,19 @@ export default function PcBuilderPage() {
                       const price = p ? Number(p.discount_price || p.selling_price || 0) : 0;
 
                       return (
-                        <tr key={slot.key} className={index % 2 === 1 ? 'bg-slate-50/80' : 'bg-white'}>
-                          <td className="border border-slate-300 py-1 px-1.5 text-center font-mono font-medium text-slate-600">
+                        <tr key={slot.key} className={index % 2 === 1 ? 'bg-slate-50/90' : 'bg-white'}>
+                          <td className="border border-slate-300 py-1 px-1.5 text-center font-mono font-bold text-slate-600">
                             {index + 1}
                           </td>
-                          <td className="border border-slate-300 py-1 px-2 font-bold text-slate-800">
+                          <td className="border border-slate-300 py-1 px-2.5 font-bold text-slate-900">
                             {slot.name.replace(/\(.*?\)/g, '').trim()}
                           </td>
-                          <td className="border border-slate-300 py-1 px-2">
+                          <td className="border border-slate-300 py-1 px-2.5">
                             {p ? (
                               <div>
-                                <span className="font-bold text-slate-900">{p.name}</span>
+                                <span className="font-bold text-slate-950">{p.name}</span>
                                 {p.sku && (
-                                  <span className="text-[9px] text-slate-500 font-mono ml-2">
+                                  <span className="text-[9.5px] text-slate-600 font-mono ml-2 font-medium">
                                     [SKU: {p.sku}]
                                   </span>
                                 )}
@@ -1287,16 +1328,16 @@ export default function PcBuilderPage() {
                               <span className="italic text-slate-400">Not selected / Customer to provide</span>
                             )}
                           </td>
-                          <td className="border border-slate-300 py-1 px-2 text-slate-700">
-                            {p ? (p.warranty_period || '1 Year') : '-'}
+                          <td className="border border-slate-300 py-1 px-2.5 text-slate-800 font-medium">
+                            {p ? (p.warranty_period || '1 Year Official') : '-'}
                           </td>
-                          <td className="border border-slate-300 py-1 px-1 text-center font-bold">
+                          <td className="border border-slate-300 py-1 px-1.5 text-center font-bold text-slate-950">
                             {p ? 1 : 0}
                           </td>
-                          <td className="border border-slate-300 py-1 px-2 text-right font-mono text-slate-800">
+                          <td className="border border-slate-300 py-1 px-2.5 text-right font-mono text-slate-900 font-medium">
                             {p ? price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                           </td>
-                          <td className="border border-slate-300 py-1 px-2 text-right font-mono font-bold text-slate-900">
+                          <td className="border border-slate-300 py-1 px-2.5 text-right font-mono font-bold text-slate-950">
                             {p ? price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                           </td>
                         </tr>
@@ -1310,39 +1351,39 @@ export default function PcBuilderPage() {
                   {/* Amount in words & Inclusions */}
                   <div className="flex-1">
                     <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-300">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block">
+                      <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500 block">
                         Amount in Words:
                       </span>
-                      <p className="text-[11px] font-bold text-slate-900 mt-0.5 capitalize">
+                      <p className="text-xs font-black text-slate-950 mt-0.5 capitalize">
                         {numberToWords(totalPrice)}
                       </p>
-                      <p className="mt-1 text-[9px] text-slate-500">
-                        • Professional assembly, thermal compounding, cable management & 24h stability testing included.
+                      <p className="mt-1 text-[10px] text-slate-600 leading-snug">
+                        • Verified assembly, premium thermal paste application, professional cable routing & 24h stability stress testing included.
                       </p>
                     </div>
                   </div>
 
                   {/* Financial Summary */}
                   <div className="w-64">
-                    <table className="w-full text-[10px]">
+                    <table className="w-full text-[11px]">
                       <tbody>
                         <tr className="border-b border-slate-200">
-                          <td className="py-1 text-slate-600">Subtotal ({selectedCount} components):</td>
-                          <td className="py-1 text-right font-mono font-bold text-slate-900">
+                          <td className="py-0.5 text-slate-700 font-medium">Subtotal ({selectedCount} components):</td>
+                          <td className="py-0.5 text-right font-mono font-bold text-slate-950">
                             ৳{totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="py-1 text-slate-600">Assembly & Diagnostics:</td>
-                          <td className="py-1 text-right font-bold text-emerald-600">FREE</td>
+                          <td className="py-0.5 text-slate-700 font-medium">Assembly & Diagnostics:</td>
+                          <td className="py-0.5 text-right font-bold text-emerald-700">FREE</td>
                         </tr>
                         <tr className="border-b border-slate-200">
-                          <td className="py-1 text-slate-600">Applicable Taxes:</td>
-                          <td className="py-1 text-right font-semibold text-slate-700">Included</td>
+                          <td className="py-0.5 text-slate-700 font-medium">Applicable Taxes:</td>
+                          <td className="py-0.5 text-right font-semibold text-slate-800">Included</td>
                         </tr>
                         <tr className="border-b-2 border-slate-900 bg-slate-100 font-bold">
-                          <td className="py-1.5 font-black text-slate-900 text-xs pl-1.5">GRAND TOTAL:</td>
-                          <td className="py-1.5 text-right font-mono font-black text-sky-900 text-sm pr-1.5">
+                          <td className="py-1.5 font-black text-slate-950 text-xs pl-2">GRAND TOTAL:</td>
+                          <td className="py-1.5 text-right font-mono font-black text-sky-950 text-base pr-2">
                             ৳{totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                         </tr>
@@ -1352,9 +1393,9 @@ export default function PcBuilderPage() {
                 </div>
 
                 {/* Terms & Conditions (Compact for 1-page fit) */}
-                <div className="border-t border-slate-300 pt-2 mb-4 text-[9px] text-slate-600 leading-snug">
-                  <span className="font-bold text-slate-800 uppercase block mb-0.5">Terms & Conditions:</span>
-                  <div className="grid grid-cols-2 gap-x-4">
+                <div className="border-t border-slate-300 pt-2 mb-3 text-[10px] text-slate-700 leading-normal">
+                  <span className="font-bold text-slate-900 uppercase block mb-1">Terms & Conditions:</span>
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-0.5">
                     <p>1. Prices include VAT and are valid for 7 days from generation.</p>
                     <p>2. Official warranty claims handled via authorized distributor service points.</p>
                     <p>3. Physical burns, bent pins or liquid ingress void warranty.</p>
@@ -1362,18 +1403,13 @@ export default function PcBuilderPage() {
                   </div>
                 </div>
 
-                {/* Signatures */}
-                <div className="flex items-center justify-between pt-4 border-t border-dashed border-slate-300 text-[10px]">
-                  <div className="text-center">
-                    <div className="w-40 border-b border-slate-400 mb-1"></div>
-                    <span className="font-bold text-slate-800">Prepared By: Sales & Tech</span>
-                    <p className="text-[8.5px] text-slate-500">Authorized Signature & Seal</p>
+                {/* Bottom Footer Note (Organized Corporate Disclaimer - No seal/signature lines) */}
+                <div className="border-t border-slate-300 pt-2 flex items-center justify-between text-[10px] text-slate-600 font-medium">
+                  <div>
+                    <span>Official computerized quotation from CORENIX COMPUTERS & TECH LTD. Thank you for building with us!</span>
                   </div>
-
-                  <div className="text-center">
-                    <div className="w-40 border-b border-slate-400 mb-1"></div>
-                    <span className="font-bold text-slate-800">Customer Acceptance</span>
-                    <p className="text-[8.5px] text-slate-500">Signature & Date</p>
+                  <div className="font-mono text-[9.5px] text-slate-500 font-semibold">
+                    Doc ID: {quotationRefNumber} • https://corenix.com.bd
                   </div>
                 </div>
               </div>

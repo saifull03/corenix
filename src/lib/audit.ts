@@ -1,4 +1,5 @@
 import { query } from './db';
+import { getCurrentUser } from './auth';
 
 export async function logAudit({
   userId,
@@ -22,15 +23,33 @@ export async function logAudit({
   ipAddress?: string;
 }) {
   try {
+    let finalUserId = userId;
+    let finalUserName = userName;
+    let finalRoleName = roleName;
+
+    // Auto-resolve current logged-in staff user if not explicitly passed
+    if (!finalUserId) {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          finalUserId = currentUser.id;
+          finalUserName = currentUser.name;
+          finalRoleName = (currentUser as any).role_name || (currentUser as any).role_slug || 'Super Admin';
+        }
+      } catch (authErr) {
+        // Fallback in background/cron contexts
+      }
+    }
+
     await query(
       `INSERT INTO audit_logs (
         user_id, user_name, role_name, module, action, record_id,
         old_data_json, new_data_json, ip_address
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        userId || null,
-        userName || 'System',
-        roleName || 'System',
+        finalUserId || null,
+        finalUserName || 'System Administrator',
+        finalRoleName || 'Super Admin',
         module,
         action,
         recordId || null,

@@ -138,12 +138,13 @@ async function seed() {
 
   for (const b of brands) {
     await connection.query(
-      `INSERT INTO brands (name, slug, country, website, description, short_desc, is_featured, meta_title, meta_desc, focus_keyword)
-       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE description = VALUES(description)`,
+      `INSERT INTO brands (name, slug, logo, country, website, description, short_desc, is_featured, meta_title, meta_desc, focus_keyword)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE description = VALUES(description), logo = VALUES(logo)`,
       [
         b.name,
         b.slug,
+        `/images/brands/${b.slug}.svg`,
         b.country,
         b.website,
         b.desc,

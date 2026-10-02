@@ -88,6 +88,7 @@ export default function CreateProductPage() {
     warranty_period: '',
     status: 'published',
     is_featured: false,
+    is_hot: false,
     is_new: false,
     // 4. Pricing
     purchase_cost: '' as string | number,
@@ -286,6 +287,7 @@ export default function CreateProductPage() {
           selling_price: Number(formData.selling_price),
           discount_price: Number(formData.discount_price),
           is_featured: formData.is_featured,
+          is_hot: formData.is_hot,
           is_new: formData.is_new,
           is_pc_builder: formData.is_pc_builder,
           pc_builder_component: formData.pc_builder_component,
@@ -445,7 +447,7 @@ export default function CreateProductPage() {
                 />
               </div>
 
-              <div className="sm:col-span-2 flex items-center gap-6 pt-2">
+              <div className="sm:col-span-2 flex items-center gap-6 pt-2 flex-wrap">
                 <label className="flex items-center gap-2 cursor-pointer text-slate-300">
                   <input
                     type="checkbox"
@@ -453,7 +455,17 @@ export default function CreateProductPage() {
                     onChange={(e) => handleChange('is_featured', e.target.checked)}
                     className="rounded text-brand-500"
                   />
-                  <span>Mark as Featured Hardware</span>
+                  <span>⭐ Featured / Trending Hardware</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_hot}
+                    onChange={(e) => handleChange('is_hot', e.target.checked)}
+                    className="rounded text-rose-500"
+                  />
+                  <span>🔥 Hot Deal Badge</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer text-slate-300">
@@ -463,7 +475,7 @@ export default function CreateProductPage() {
                     onChange={(e) => handleChange('is_new', e.target.checked)}
                     className="rounded text-brand-500"
                   />
-                  <span>New Arrival Badge</span>
+                  <span>✨ New Arrival Badge</span>
                 </label>
               </div>
             </div>

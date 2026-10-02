@@ -25,6 +25,15 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Add Role Modal states
+  const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleSlug, setNewRoleSlug] = useState('');
+  const [newRoleDesc, setNewRoleDesc] = useState('');
+  const [newRoleSubmitting, setNewRoleSubmitting] = useState(false);
+  const [roleErrorMsg, setRoleErrorMsg] = useState('');
+  const [roleSuccessToast, setRoleSuccessToast] = useState('');
+
   // Form states
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -53,6 +62,59 @@ export default function AdminUsersPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Auto-slugify role name
+  const handleRoleNameChange = (val: string) => {
+    setNewRoleName(val);
+    const generated = val
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+    setNewRoleSlug(generated);
+  };
+
+  // Handle Create Role
+  const handleCreateRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRoleErrorMsg('');
+    setNewRoleSubmitting(true);
+
+    try {
+      const res = await fetch('/api/admin/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newRoleName,
+          slug: newRoleSlug,
+          description: newRoleDesc,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setRoleErrorMsg(data.error || 'Failed to create role');
+        setNewRoleSubmitting(false);
+        return;
+      }
+
+      if (data.role) {
+        setRoles((prev) => [...prev, data.role]);
+        setRoleId(data.role.id);
+      }
+
+      setNewRoleName('');
+      setNewRoleSlug('');
+      setNewRoleDesc('');
+      setIsAddRoleModalOpen(false);
+      setRoleSuccessToast(`Role "${data.role?.name || newRoleName}" created successfully!`);
+      setTimeout(() => setRoleSuccessToast(''), 3500);
+    } catch (err: any) {
+      setRoleErrorMsg(err.message || 'Failed to create role');
+    } finally {
+      setNewRoleSubmitting(false);
     }
   };
 
@@ -122,6 +184,14 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Role Success Toast */}
+      {roleSuccessToast && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xl animate-in fade-in slide-in-from-top-4">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>{roleSuccessToast}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -137,13 +207,23 @@ export default function AdminUsersPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-sky-500/20 transition-all self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Staff Account</span>
-        </button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsAddRoleModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Add New Role</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-sky-500/20 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Staff Account</span>
+          </button>
+        </div>
       </div>
 
       {/* Metrics */}
@@ -252,18 +332,18 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <span className="text-slate-900 dark:text-white font-medium block">{u.email}</span>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400">{u.phone || 'No phone'}</span>
                       </td>
 
-                      <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-sky-100 text-sky-800 dark:bg-cyan-950 dark:text-cyan-300 border border-sky-300 dark:border-cyan-800">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-sky-50 text-sky-800 dark:bg-cyan-950/80 dark:text-cyan-300 border border-sky-200 dark:border-cyan-800/80 shadow-2xs whitespace-nowrap">
                           {u.role_name}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         {u.branch_name ? (
                           <div>
                             <span className="font-semibold text-slate-800 dark:text-slate-200 block">{u.branch_name}</span>
@@ -274,11 +354,11 @@ export default function AdminUsersPage() {
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <select
                           value={u.status}
                           onChange={(e) => handleStatusChange(u.id, e.target.value)}
-                          className={`text-xs font-bold rounded-lg px-2 py-0.5 border outline-none cursor-pointer ${
+                          className={`text-xs font-bold rounded-lg px-2.5 py-1 border outline-none cursor-pointer transition-colors ${
                             u.status === 'active'
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
                               : 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950 dark:text-rose-300'
@@ -304,26 +384,53 @@ export default function AdminUsersPage() {
 
       {/* TAB 2: ROLES PERMISSIONS MATRIX */}
       {activeTab === 'roles' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {roles.map((r) => (
-            <div
-              key={r.id}
-              className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-base">{r.name}</h4>
-                  <code className="text-xs text-sky-600 dark:text-cyan-400 font-mono">{r.slug}</code>
-                </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                  {users.filter((u) => u.role_id === r.id).length} Users Assigned
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">
-                {r.description || 'Predefined system security role.'}
-              </p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Defined Security Roles</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Manage permissions, access controls, and authorized capabilities for each role.</p>
             </div>
-          ))}
+            <button
+              type="button"
+              onClick={() => setIsAddRoleModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add New Role</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {roles.map((r) => (
+              <div
+                key={r.id}
+                className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm"
+              >
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-base">{r.name}</h4>
+                    <code className="text-xs text-sky-600 dark:text-cyan-400 font-mono">{r.slug}</code>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {users.filter((u) => u.role_id === r.id).length} Users Assigned
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">
+                  {r.description || 'Predefined system security role.'}
+                </p>
+              </div>
+            ))}
+
+            {/* Quick Add Role Card */}
+            <button
+              type="button"
+              onClick={() => setIsAddRoleModalOpen(true)}
+              className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-5 flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-300 dark:hover:border-purple-800 transition-all min-h-[120px]"
+            >
+              <Plus className="w-6 h-6" />
+              <span className="text-xs font-bold">Create Custom Role</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -410,20 +517,40 @@ export default function AdminUsersPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Assigned Role *
-                  </label>
-                  <select
-                    value={roleId}
-                    onChange={(e) => setRoleId(Number(e.target.value))}
-                    className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none"
-                  >
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id} className="dark:bg-navy-900">
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-slate-700 dark:text-slate-300">
+                      Assigned Role *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddRoleModalOpen(true)}
+                      className="text-[11px] font-bold text-sky-600 hover:text-sky-500 dark:text-cyan-400 dark:hover:text-cyan-300 flex items-center gap-0.5 hover:underline"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>New Role</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={roleId}
+                      onChange={(e) => setRoleId(Number(e.target.value))}
+                      className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none"
+                    >
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.id} className="dark:bg-navy-900">
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddRoleModalOpen(true)}
+                      title="Add new role"
+                      className="p-2 rounded-xl bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-cyan-400 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900 transition-colors flex-shrink-0 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -459,6 +586,92 @@ export default function AdminUsersPage() {
                   className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow-sm disabled:opacity-50"
                 >
                   {submitting ? 'Creating...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create New Role Modal */}
+      {isAddRoleModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-navy-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span>Create New RBAC Role</span>
+              </h3>
+              <button
+                onClick={() => setIsAddRoleModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {roleErrorMsg && (
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
+                {roleErrorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateRole} className="space-y-4 mt-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Role Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newRoleName}
+                  onChange={(e) => handleRoleNameChange(e.target.value)}
+                  placeholder="e.g. Warehouse Supervisor, Inventory Auditor"
+                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Role Identifier / Slug *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newRoleSlug}
+                  onChange={(e) => setNewRoleSlug(e.target.value)}
+                  placeholder="e.g. warehouse-supervisor"
+                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Role Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={newRoleDesc}
+                  onChange={(e) => setNewRoleDesc(e.target.value)}
+                  placeholder="Describe authorized access level and responsibilities for this role..."
+                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddRoleModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={newRoleSubmitting}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {newRoleSubmitting ? 'Creating...' : 'Save & Select Role'}
                 </button>
               </div>
             </form>
