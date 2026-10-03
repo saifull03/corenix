@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
       brand_id,
       category_id,
       warranty_period,
+      status = 'published',
+      stock_status = 'In Stock',
       purchase_cost,
       selling_price,
       discount_price,
@@ -154,11 +156,11 @@ export async function POST(req: NextRequest) {
     // 1. Insert product
     const pRes = await query<any>(
       `INSERT INTO products (
-        name, slug, sku, model, brand_id, category_id, warranty_period,
+        name, slug, sku, model, brand_id, category_id, warranty_period, status, stock_status,
         purchase_cost, avg_cost, selling_price, discount_price, min_selling_price,
         discount_amount, discount_percent, is_featured, is_hot, is_new, is_pc_builder,
         pc_builder_component, seo_score
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 92)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 92)`,
       [
         name,
         finalSlug,
@@ -167,6 +169,8 @@ export async function POST(req: NextRequest) {
         brand_id,
         category_id,
         warranty_period || '1 Year Official Warranty',
+        status || 'published',
+        stock_status || 'In Stock',
         purchase_cost || 0,
         purchase_cost || 0,
         selling_price,

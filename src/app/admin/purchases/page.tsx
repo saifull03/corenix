@@ -2116,6 +2116,18 @@ function PurchasesContent() {
                                 </button>
                               )}
 
+                              {/* View Partner House Statement / Ledger - Accounts Manager, Admin, HR only */}
+                              {hasManageAccess && (
+                                <button
+                                  onClick={() => openLedgerForHouse(sale.house_name)}
+                                  className="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900 text-teal-700 dark:text-teal-300 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                  title={`View Two-Way Ledger for ${sale.house_name}`}
+                                >
+                                  <FileText className="w-3 h-3" />
+                                  <span>Ledger</span>
+                                </button>
+                              )}
+
                               {/* Print Delivery Challan / Invoice */}
                               <button
                                 onClick={() => setViewSaleChallanItem(sale)}

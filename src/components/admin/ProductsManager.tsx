@@ -43,6 +43,7 @@ export interface ProductItem {
   selling_price: number;
   discount_price?: number | null;
   total_stock?: number | null;
+  stock_status?: string | null;
   seo_score?: number | null;
   is_featured?: number | boolean;
   is_hot?: number | boolean;
@@ -66,9 +67,10 @@ export default function ProductsManager({ initialProducts }: Props) {
   const [highlightFilter, setHighlightFilter] = useState<HighlightFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [brandFilter, setBrandFilter] = useState<string>('all');
-  const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('all');
+  const [stockFilter, setStockFilter] = useState<string>('all');
   const [copiedSku, setCopiedSku] = useState<string | null>(null);
   const [updatingFlag, setUpdatingFlag] = useState<{ id: number; field: 'is_featured' | 'is_hot' } | null>(null);
+  const [updatingStockStatusId, setUpdatingStockStatusId] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Extract unique categories & brands for dropdown filters
@@ -148,6 +150,52 @@ export default function ProductsManager({ initialProducts }: Props) {
     }
   };
 
+  // Change product stock status directly
+  const handleUpdateStockStatus = async (productId: number, newStockStatus: string) => {
+    const targetProduct = products.find(p => p.id === productId);
+    if (!targetProduct) return;
+    const oldStatus = targetProduct.stock_status || 'In Stock';
+
+    setUpdatingStockStatusId(productId);
+    // Optimistic UI update
+    setProducts(prev =>
+      prev.map(p => {
+        if (p.id === productId) {
+          return { ...p, stock_status: newStockStatus };
+        }
+        return p;
+      })
+    );
+
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock_status: newStockStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update product stock status');
+      }
+
+      setToastMessage(`"${targetProduct.name.slice(0, 22)}..." status changed to "${newStockStatus}" ✅`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      // Rollback
+      setProducts(prev =>
+        prev.map(p => {
+          if (p.id === productId) {
+            return { ...p, stock_status: oldStatus };
+          }
+          return p;
+        })
+      );
+      alert('Error updating stock status: ' + err.message);
+    } finally {
+      setUpdatingStockStatusId(null);
+    }
+  };
+
   // Filter products by search query across Name, Model, SKU, Barcode, & Highlights
   const filteredProducts = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -168,12 +216,12 @@ export default function ProductsManager({ initialProducts }: Props) {
         return false;
       }
 
-      // Stock filter
-      if (stockFilter === 'in_stock' && (!p.total_stock || p.total_stock <= 0)) {
-        return false;
-      }
-      if (stockFilter === 'out_of_stock' && p.total_stock && p.total_stock > 0) {
-        return false;
+      // Stock status filter
+      if (stockFilter !== 'all') {
+        const currentStockStatus = p.stock_status || ((p.total_stock || 0) > 0 ? 'In Stock' : 'Out Of Stock');
+        if (stockFilter === 'in_stock' && currentStockStatus !== 'In Stock') return false;
+        if (stockFilter === 'out_of_stock' && currentStockStatus !== 'Out Of Stock') return false;
+        if (stockFilter !== 'in_stock' && stockFilter !== 'out_of_stock' && currentStockStatus !== stockFilter) return false;
       }
 
       // Search matching
@@ -506,15 +554,19 @@ export default function ProductsManager({ initialProducts }: Props) {
               ))}
             </select>
 
-            {/* Stock Filter */}
+            {/* Stock Status Filter */}
             <select
               value={stockFilter}
-              onChange={e => setStockFilter(e.target.value as any)}
+              onChange={e => setStockFilter(e.target.value)}
               className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-slate-700 dark:text-slate-300 text-xs font-medium focus:outline-none focus:border-brand-500 cursor-pointer"
             >
-              <option value="all">All Inventory</option>
-              <option value="in_stock">In Stock Only</option>
-              <option value="out_of_stock">Out of Stock</option>
+              <option value="all">All Statuses</option>
+              <option value="In Stock">In Stock</option>
+              <option value="Out Of Stock">Out Of Stock</option>
+              <option value="Pre-Order">Pre-Order</option>
+              <option value="Up Coming">Up Coming</option>
+              <option value="2-3 Days">2-3 Days</option>
+              <option value="Call for Price">Call for Price</option>
             </select>
 
             {isFiltered && (
@@ -562,6 +614,7 @@ export default function ProductsManager({ initialProducts }: Props) {
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider bg-slate-50/50 dark:bg-navy-950/40">
                   <th className="py-3 px-3">Product Name &amp; SKU</th>
+                  <th className="py-3 px-3 text-center">Status / Availability</th>
                   <th className="py-3 px-3">Homepage Showcase &amp; Promos</th>
                   <th className="py-3 px-3">Category</th>
                   <th className="py-3 px-3">Brand</th>
@@ -593,7 +646,7 @@ export default function ProductsManager({ initialProducts }: Props) {
                           <img
                             src={
                               p.primary_image ||
-                              'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=100&q=80'
+                              'https://images.unsplash.com/photo-158720237277-e229f172b9d7?auto=format&fit=crop&w=100&q=80'
                             }
                             alt={p.name}
                             className="w-10 h-10 object-contain bg-slate-50 dark:bg-navy-950 rounded-lg p-1 border border-slate-200 dark:border-slate-800 flex-shrink-0"
@@ -617,6 +670,45 @@ export default function ProductsManager({ initialProducts }: Props) {
                                 </span>
                               ) : null}
                             </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Stock Status / Product Availability (Interactive Real-Time Quick Selector) */}
+                      <td className="py-3 px-3 text-center">
+                        <div className="relative inline-block">
+                          <select
+                            value={p.stock_status || 'In Stock'}
+                            onChange={e => handleUpdateStockStatus(p.id, e.target.value)}
+                            disabled={updatingStockStatusId === p.id}
+                            title="Change stock status live"
+                            className={`text-[11px] font-bold px-2.5 py-1.5 rounded-lg border appearance-none pr-7 cursor-pointer focus:outline-none transition-all shadow-2xs ${
+                              p.stock_status === 'Out Of Stock'
+                                ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800'
+                                : p.stock_status === 'Pre-Order'
+                                ? 'bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/70 dark:text-purple-300 dark:border-purple-800'
+                                : p.stock_status === 'Up Coming'
+                                ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800'
+                                : p.stock_status === '2-3 Days'
+                                ? 'bg-sky-50 text-sky-700 border-sky-300 dark:bg-sky-950/70 dark:text-sky-300 dark:border-sky-800'
+                                : p.stock_status === 'Call for Price'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-950/70 dark:text-indigo-300 dark:border-indigo-800'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800'
+                            }`}
+                          >
+                            <option value="In Stock" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">In Stock</option>
+                            <option value="Out Of Stock" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Out Of Stock</option>
+                            <option value="Pre-Order" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Pre-Order</option>
+                            <option value="Up Coming" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Up Coming</option>
+                            <option value="2-3 Days" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">2-3 Days</option>
+                            <option value="Call for Price" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Call for Price</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                            {updatingStockStatusId === p.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-slate-500" />
+                            ) : (
+                              <ChevronDown className="w-3 h-3 text-slate-500" />
+                            )}
                           </div>
                         </div>
                       </td>

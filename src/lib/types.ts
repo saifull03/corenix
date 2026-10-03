@@ -101,6 +101,7 @@ export interface Product {
   category_slug?: string;
   warranty_period: string;
   status: 'published' | 'draft' | 'archived';
+  stock_status?: 'In Stock' | 'Out Of Stock' | 'Pre-Order' | 'Up Coming' | '2-3 Days' | 'Call for Price' | string;
   is_featured: boolean;
   is_new: boolean;
   is_hot: boolean;

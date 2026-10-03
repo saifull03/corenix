@@ -38,6 +38,9 @@ import {
   Receipt,
   Copy,
   PlusCircle,
+  Clock,
+  Truck,
+  PhoneCall,
 } from 'lucide-react';
 
 interface ComponentSlot {
@@ -116,6 +119,7 @@ export default function PcBuilderPage() {
   const [modalSearch, setModalSearch] = useState<string>('');
   const [modalBrandFilter, setModalBrandFilter] = useState<string>('all');
   const [modalSort, setModalSort] = useState<'price_asc' | 'price_desc' | 'featured'>('featured');
+  const [hideOutOfStockInModal, setHideOutOfStockInModal] = useState<boolean>(false);
   const [shareCode, setShareCode] = useState<string>('');
 
   // Feature: Hide unselected components option
@@ -135,6 +139,21 @@ export default function PcBuilderPage() {
   const [customSlotName, setCustomSlotName] = useState<string>('');
   const [customSlotCategory, setCustomSlotCategory] = useState<string>('accessories');
 
+  // Helper: Strictly ensure only "In Stock" products can be added to PC Builder
+  const isProductEligibleForPcBuilder = (p: any): boolean => {
+    if (!p) return false;
+    const status = p.stock_status || 'In Stock';
+    // Must be explicitly 'In Stock'
+    if (status !== 'In Stock') {
+      return false;
+    }
+    // Also verify physical inventory is not 0
+    if (p.total_stock !== undefined && p.total_stock !== null && Number(p.total_stock) <= 0) {
+      return false;
+    }
+    return true;
+  };
+
   // Fetch PC Builder eligible products from database
   useEffect(() => {
     fetch('/api/products?limit=350')
@@ -147,7 +166,32 @@ export default function PcBuilderPage() {
               uniqueMap.set(prod.id, prod);
             }
           });
-          setAvailableProducts(Array.from(uniqueMap.values()));
+          const prods = Array.from(uniqueMap.values());
+          setAvailableProducts(prods);
+
+          // Handle URL query pre-selection (e.g. ?select=gpu&pid=12)
+          if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const selectSlot = urlParams.get('select');
+            const pidStr = urlParams.get('pid');
+            if (selectSlot && pidStr) {
+              const pid = parseInt(pidStr, 10);
+              const targetProduct = prods.find((p: any) => p.id === pid);
+              if (targetProduct) {
+                if (!isProductEligibleForPcBuilder(targetProduct)) {
+                  alert(`Notice: Only "In Stock" products can be added to the PC Builder. "${targetProduct.name}" is currently marked as "${targetProduct.stock_status || 'Unavailable'}".`);
+                } else {
+                  setSlots(prev =>
+                    prev.map(s =>
+                      s.key === selectSlot || (selectSlot === 'gpu' && s.key === 'gpu') || s.key.startsWith(selectSlot)
+                        ? { ...s, product: targetProduct }
+                        : s
+                    )
+                  );
+                }
+              }
+            }
+          }
         }
       })
       .catch(() => {});
@@ -384,7 +428,12 @@ export default function PcBuilderPage() {
       );
     }
 
-    // 4. Sort
+    // 4. Filter out non-instock if in-stock only toggle is checked
+    if (hideOutOfStockInModal) {
+      list = list.filter(p => isProductEligibleForPcBuilder(p));
+    }
+
+    // 5. Sort
     list = [...list].sort((a, b) => {
       const priceA = Number(a.discount_price || a.selling_price || 0);
       const priceB = Number(b.discount_price || b.selling_price || 0);
@@ -393,14 +442,14 @@ export default function PcBuilderPage() {
       return (b.id || 0) - (a.id || 0);
     });
 
-    // 5. Ensure uniqueness by ID
+    // 6. Ensure uniqueness by ID
     const seen = new Set<number>();
     return list.filter(p => {
       if (seen.has(p.id)) return false;
       seen.add(p.id);
       return true;
     });
-  }, [availableProducts, selectingSlot, modalBrandFilter, modalSearch, modalSort]);
+  }, [availableProducts, selectingSlot, modalBrandFilter, modalSearch, modalSort, hideOutOfStockInModal]);
 
   // Unique brands in the current slot modal
   const modalAvailableBrands = useMemo(() => {
@@ -500,6 +549,10 @@ export default function PcBuilderPage() {
   }
 
   const handleSelectProduct = (slotKey: string, product: any) => {
+    if (!isProductEligibleForPcBuilder(product)) {
+      alert(`Only "In Stock" products can be added to the PC Builder. ("${product.name}" is currently ${product.stock_status || 'not in stock'})`);
+      return;
+    }
     setSlots(slots.map(s => s.key === slotKey ? { ...s, product } : s));
     setSelectingSlot(null);
     setModalSearch('');
@@ -970,6 +1023,17 @@ export default function PcBuilderPage() {
                     <option value="price_asc">Price: Low to High</option>
                     <option value="price_desc">Price: High to Low</option>
                   </select>
+
+                  {/* Hide Out of Stock Toggle */}
+                  <label className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer select-none bg-slate-100 dark:bg-slate-950 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={hideOutOfStockInModal}
+                      onChange={e => setHideOutOfStockInModal(e.target.checked)}
+                      className="rounded text-sky-600 focus:ring-0 w-3.5 h-3.5"
+                    />
+                    <span>In-Stock Only</span>
+                  </label>
                 </div>
 
                 {/* Brand Filter Pills */}
@@ -1010,18 +1074,26 @@ export default function PcBuilderPage() {
                     const price = Number(p.discount_price || p.selling_price || 0);
                     const originalPrice = Number(p.selling_price || 0);
                     const hasDiscount = p.discount_price && Number(p.discount_price) < originalPrice;
+                    const isEligible = isProductEligibleForPcBuilder(p);
+                    const isOutOfStockItem = !isEligible;
 
                     return (
                       <div
                         key={`${p.id || 'prod'}-${pIdx}`}
-                        className="pt-3 first:pt-0 p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-4 transition-all"
+                        className={`pt-3 first:pt-0 p-3.5 rounded-2xl border flex items-center justify-between gap-4 transition-all ${
+                          !isEligible
+                            ? 'bg-rose-50/30 dark:bg-rose-950/15 border-rose-200/50 dark:border-rose-900/30 opacity-75'
+                            : 'bg-slate-50 hover:bg-slate-100/90 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 border-slate-200/80 dark:border-slate-800'
+                        }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={p.primary_image || 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=200&q=80'}
                             alt={p.name}
-                            className="w-14 h-14 object-contain bg-white dark:bg-navy-950 rounded-xl p-1.5 border border-slate-200 dark:border-slate-800 flex-shrink-0"
+                            className={`w-14 h-14 object-contain bg-white dark:bg-navy-950 rounded-xl p-1.5 border border-slate-200 dark:border-slate-800 flex-shrink-0 ${
+                              !isEligible ? 'grayscale-[40%] opacity-60' : ''
+                            }`}
                           />
                           <div className="min-w-0">
                             <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2">
@@ -1037,32 +1109,83 @@ export default function PcBuilderPage() {
                               <span>•</span>
                               <span>{p.warranty_period || '1 Year Official'}</span>
                               <span>•</span>
-                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                                In Stock ({p.total_stock || 25} Units)
-                              </span>
+                              {p.stock_status === 'Out Of Stock' || (p.total_stock !== undefined && Number(p.total_stock) <= 0) ? (
+                                <span className="text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1">
+                                  <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                                  Out of Stock
+                                </span>
+                              ) : p.stock_status === 'Pre-Order' ? (
+                                <span className="text-purple-600 dark:text-purple-400 font-bold flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-purple-500" />
+                                  Pre-Order Only
+                                </span>
+                              ) : p.stock_status === 'Up Coming' ? (
+                                <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
+                                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                  Upcoming
+                                </span>
+                              ) : p.stock_status === '2-3 Days' ? (
+                                <span className="text-sky-600 dark:text-sky-400 font-bold flex items-center gap-1">
+                                  <Truck className="w-3.5 h-3.5 text-sky-500" />
+                                  2-3 Days Delivery
+                                </span>
+                              ) : p.stock_status === 'Call for Price' ? (
+                                <span className="text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
+                                  <PhoneCall className="w-3.5 h-3.5 text-indigo-500" />
+                                  Call for Price
+                                </span>
+                              ) : (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                  In Stock {p.total_stock ? `(${p.total_stock} Units)` : ''}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3 flex-shrink-0">
                           <div className="text-right">
-                            <span className="text-sm font-black text-sky-600 dark:text-brand-400 block">
-                              ৳{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                            {hasDiscount && (
-                              <span className="text-[10px] text-slate-400 line-through block">
-                                ৳{originalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {p.stock_status === 'Call for Price' ? (
+                              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 block">
+                                Call for Price
                               </span>
+                            ) : (
+                              <>
+                                <span className="text-sm font-black text-sky-600 dark:text-brand-400 block">
+                                  ৳{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                {hasDiscount && (
+                                  <span className="text-[10px] text-slate-400 line-through block">
+                                    ৳{originalPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
 
-                          <button
-                            onClick={() => handleSelectProduct(selectingSlot, p)}
-                            className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Select</span>
-                          </button>
+                          {!isEligible ? (
+                            <button
+                              disabled
+                              className="px-3.5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold text-xs cursor-not-allowed flex items-center gap-1.5 opacity-60 shadow-none whitespace-nowrap"
+                              title={`Unavailable for PC Builder (${p.stock_status || 'Out of Stock'})`}
+                            >
+                              <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                              <span>
+                                {p.stock_status === 'Out Of Stock' || (p.total_stock !== undefined && Number(p.total_stock) <= 0)
+                                  ? 'Out of Stock'
+                                  : p.stock_status || 'Unavailable'}
+                              </span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleSelectProduct(selectingSlot, p)}
+                              className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 dark:bg-brand-500 dark:hover:bg-brand-400 text-white dark:text-navy-950 font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Select</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

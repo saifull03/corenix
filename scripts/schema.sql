@@ -165,6 +165,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `product_type` ENUM('physical', 'bundle', 'digital') DEFAULT 'physical',
   `warranty_period` VARCHAR(80) DEFAULT '1 Year Official Warranty',
   `status` ENUM('published', 'draft', 'archived') DEFAULT 'published',
+  `stock_status` VARCHAR(50) DEFAULT 'In Stock',
   `is_featured` BOOLEAN DEFAULT FALSE,
   `is_new` BOOLEAN DEFAULT FALSE,
   `is_hot` BOOLEAN DEFAULT FALSE,

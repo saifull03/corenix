@@ -107,20 +107,27 @@ export default async function ProductDetailPage({ params }: Props) {
   );
 
   // 4. Fetch related products in the same category
-  const related = await query<Product[]>(
+  const rawRelated = await query<Product[]>(
     `SELECT p.*,
             b.name as brand_name, b.slug as brand_slug,
             c.name as category_name, c.slug as category_slug,
-            pi.image_url as primary_image,
+            (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image,
             (SELECT SUM(quantity - reserved_qty) FROM inventory WHERE product_id = p.id) as total_stock
      FROM products p
      JOIN brands b ON p.brand_id = b.id
      JOIN categories c ON p.category_id = c.id
-     LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
      WHERE p.category_id = ? AND p.id != ? AND p.status = 'published'
      LIMIT 4`,
     [product.category_id, product.id]
   );
+
+  const relatedMap = new Map<number, Product>();
+  rawRelated.forEach((item) => {
+    if (item && item.id && !relatedMap.has(item.id)) {
+      relatedMap.set(item.id, item);
+    }
+  });
+  const related = Array.from(relatedMap.values());
 
   const currentPrice = product.discount_price || product.selling_price;
   const regularPrice = product.selling_price;
@@ -235,6 +242,21 @@ export default async function ProductDetailPage({ params }: Props) {
                     Model: {product.model}
                   </span>
                 )}
+                <span className={`px-2.5 py-1 rounded-lg font-bold text-[11px] uppercase tracking-wider ${
+                  product.stock_status === 'Out Of Stock'
+                    ? 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800'
+                    : product.stock_status === 'Pre-Order'
+                    ? 'bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800'
+                    : product.stock_status === 'Up Coming'
+                    ? 'bg-amber-100 text-amber-900 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
+                    : product.stock_status === '2-3 Days'
+                    ? 'bg-sky-100 text-sky-800 border border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800'
+                    : product.stock_status === 'Call for Price'
+                    ? 'bg-indigo-100 text-indigo-800 border border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800'
+                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+                }`}>
+                  ● {product.stock_status || 'In Stock'}
+                </span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -260,31 +282,41 @@ export default async function ProductDetailPage({ params }: Props) {
             <div className="p-6 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 flex items-baseline justify-between flex-wrap gap-4 shadow-xs">
               <div>
                 <span className="text-xs uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-                  Cash Special Price
+                  {product.stock_status === 'Call for Price' ? 'Pricing' : 'Cash Special Price'}
                 </span>
                 <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-sky-600 dark:text-brand-400 tracking-tight">
-                    ৳{currentPrice.toLocaleString()}
-                  </span>
-                  {product.discount_price && product.discount_price < product.selling_price && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-400 dark:text-slate-500 line-through font-medium">
-                        Regular: ৳{regularPrice.toLocaleString()}
+                  {product.stock_status === 'Call for Price' ? (
+                    <span className="text-3xl sm:text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight">
+                      Call for Price
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-3xl sm:text-4xl font-extrabold text-sky-600 dark:text-brand-400 tracking-tight">
+                        ৳{currentPrice.toLocaleString()}
                       </span>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60">
-                        Save ৳{discountAmount.toLocaleString()} ({product.discount_percent}% OFF)
-                      </span>
-                    </div>
+                      {product.discount_price && product.discount_price < product.selling_price && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-slate-400 dark:text-slate-500 line-through font-medium">
+                            Regular: ৳{regularPrice.toLocaleString()}
+                          </span>
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60">
+                            Save ৳{discountAmount.toLocaleString()} ({product.discount_percent}% OFF)
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
-              <div className="text-right">
-                <span className="text-xs text-slate-500 dark:text-slate-400 block">Estimated EMI</span>
-                <span className="text-sm font-bold text-slate-800 dark:text-white px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 inline-block mt-0.5">
-                  ৳{(Math.round(currentPrice / 12)).toLocaleString()} / mo
-                </span>
-              </div>
+              {product.stock_status !== 'Call for Price' && (
+                <div className="text-right">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block">Estimated EMI</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 inline-block mt-0.5">
+                    ৳{(Math.round(currentPrice / 12)).toLocaleString()} / mo
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Key Features Bullet Points */}
@@ -428,9 +460,9 @@ export default async function ProductDetailPage({ params }: Props) {
               </h3>
 
               <div className="space-y-3">
-                {related.map((rp) => (
+                {related.map((rp, rpIdx) => (
                   <Link
-                    key={rp.id}
+                    key={`${rp.id}-${rpIdx}`}
                     href={`/product/${rp.slug}`}
                     className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 dark:bg-slate-900/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3 transition-colors group"
                   >

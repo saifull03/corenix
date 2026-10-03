@@ -87,6 +87,7 @@ export default function CreateProductPage() {
     brand_id: 0,
     warranty_period: '',
     status: 'published',
+    stock_status: 'In Stock',
     is_featured: false,
     is_hot: false,
     is_new: false,
@@ -283,6 +284,8 @@ export default function CreateProductPage() {
           brand_id: formData.brand_id,
           category_id: formData.category_id,
           warranty_period: formData.warranty_period,
+          status: formData.status || 'published',
+          stock_status: formData.stock_status || 'In Stock',
           purchase_cost: Number(formData.purchase_cost),
           selling_price: Number(formData.selling_price),
           discount_price: Number(formData.discount_price),
@@ -445,6 +448,22 @@ export default function CreateProductPage() {
                   placeholder="e.g. 3 Years Official Replacement Warranty"
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">Product Status / Stock Availability *</label>
+                <select
+                  value={formData.stock_status}
+                  onChange={(e) => handleChange('stock_status', e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-brand-300 font-bold text-xs focus:outline-none focus:border-brand-500"
+                >
+                  <option value="In Stock">In Stock</option>
+                  <option value="Out Of Stock">Out Of Stock</option>
+                  <option value="Pre-Order">Pre-Order</option>
+                  <option value="Up Coming">Up Coming</option>
+                  <option value="2-3 Days">2-3 Days</option>
+                  <option value="Call for Price">Call for Price</option>
+                </select>
               </div>
 
               <div className="sm:col-span-2 flex items-center gap-6 pt-2 flex-wrap">

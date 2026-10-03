@@ -80,6 +80,7 @@ export default function EditProductPage() {
     category_id: 1,
     warranty_period: '1 Year Official Warranty',
     status: 'published',
+    stock_status: 'In Stock',
     is_featured: false,
     is_hot: false,
     is_new: false,
@@ -160,6 +161,7 @@ export default function EditProductPage() {
           category_id: p.category_id || 1,
           warranty_period: p.warranty_period || '1 Year Official Warranty',
           status: p.status || 'published',
+          stock_status: p.stock_status || 'In Stock',
           is_featured: Boolean(p.is_featured),
           is_hot: Boolean(p.is_hot),
           is_new: Boolean(p.is_new),
@@ -449,7 +451,7 @@ export default function EditProductPage() {
             {/* Status */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Product Status
+                Catalogue Visibility
               </label>
               <select
                 name="status"
@@ -460,6 +462,26 @@ export default function EditProductPage() {
                 <option value="published">Published (Visible on Store)</option>
                 <option value="draft">Draft (Hidden)</option>
                 <option value="archived">Archived</option>
+              </select>
+            </div>
+
+            {/* Stock Status / Product Availability */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Product Stock Status / Availability <span className="text-brand-500">*</span>
+              </label>
+              <select
+                name="stock_status"
+                value={formData.stock_status || 'In Stock'}
+                onChange={handleChange}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-brand-600 dark:text-brand-400 font-bold focus:outline-none focus:border-brand-500 cursor-pointer"
+              >
+                <option value="In Stock">In Stock</option>
+                <option value="Out Of Stock">Out Of Stock</option>
+                <option value="Pre-Order">Pre-Order</option>
+                <option value="Up Coming">Up Coming</option>
+                <option value="2-3 Days">2-3 Days</option>
+                <option value="Call for Price">Call for Price</option>
               </select>
             </div>
 

@@ -98,6 +98,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       category_id,
       warranty_period,
       status,
+      stock_status,
       purchase_cost,
       selling_price,
       discount_price,
@@ -168,6 +169,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         category_id = ?,
         warranty_period = ?,
         status = ?,
+        stock_status = ?,
         purchase_cost = ?,
         selling_price = ?,
         discount_price = ?,
@@ -191,6 +193,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         category_id,
         warranty_period || '1 Year Official Warranty',
         status || 'published',
+        stock_status || 'In Stock',
         purchase_cost || 0,
         selling_price || 0,
         discount_price || null,
@@ -407,7 +410,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     }
 
     const body = await req.json();
-    const allowedFields = ['is_featured', 'is_hot', 'is_new', 'is_sale', 'is_pc_builder', 'status', 'selling_price', 'discount_price'];
+    const allowedFields = ['is_featured', 'is_hot', 'is_new', 'is_sale', 'is_pc_builder', 'status', 'stock_status', 'selling_price', 'discount_price'];
     const updates: string[] = [];
     const values: any[] = [];
 
