@@ -462,6 +462,27 @@ html:not(.dark) th {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* Dedicated Print-Only Container Specification */
+  .invoice-print {
+    width: 190mm !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* Screen base for invoice-print */
+.invoice-print {
+  width: 100%;
+  max-width: 190mm;
+  margin: 0 auto;
+  background: #fff;
+  box-sizing: border-box;
 }
 
 

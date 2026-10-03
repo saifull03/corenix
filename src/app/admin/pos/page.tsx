@@ -641,97 +641,379 @@ export default function PosPage() {
                 @media print {
                   @page {
                     size: A4 portrait;
-                    margin: 8mm 10mm 8mm 10mm;
+                    margin: 8mm 10mm;
                   }
+                  html,
                   body {
-                    background: white !important;
-                    color: black !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    overflow: visible !important;
                   }
-                  .print-receipt-wrapper {
+                  /* Reset layout structure on print so NO parent padding/margin pushes the invoice */
+                  main,
+                  div,
+                  section,
+                  .flex-1,
+                  .space-y-4,
+                  .space-y-6,
+                  .max-w-3xl {
+                    padding: 0 !important;
+                    margin: 0 !important;
                     max-width: 100% !important;
                     width: 100% !important;
                     box-shadow: none !important;
                     border: none !important;
-                    padding: 0 !important;
-                    margin: 0 !important;
                   }
-                  .page-break-avoid {
+                  header,
+                  nav,
+                  aside,
+                  footer,
+                  .no-print,
+                  .print-hidden,
+                  [role="navigation"],
+                  button,
+                  a[href="/admin/orders"] {
+                    display: none !important;
+                  }
+                  .invoice-print,
+                  .print-receipt-wrapper {
+                    display: block !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 auto !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                    color: #000000 !important;
+                    box-sizing: border-box !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    font-size: 10px !important;
+                    line-height: 1.3 !important;
                     break-inside: avoid !important;
                     page-break-inside: avoid !important;
                   }
-                  header, nav, aside, footer, .print-hidden {
-                    display: none !important;
+                  .invoice-print * {
+                    box-sizing: border-box !important;
+                  }
+                  .invoice-print > * + * {
+                    margin-top: 2mm !important;
+                  }
+                  .invoice-header {
+                    padding: 0 0 2mm 0 !important;
+                    margin-bottom: 2mm !important;
+                    border-bottom: 1.5px solid #0f172a !important;
+                    text-align: center !important;
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                    width: 100% !important;
+                  }
+                  .invoice-header-logo {
+                    width: 22px !important;
+                    height: 22px !important;
+                    font-size: 12px !important;
+                    line-height: 22px !important;
+                    margin: 0 auto 1mm auto !important;
+                    background: #0f172a !important;
+                    color: #ffffff !important;
+                    border-radius: 6px !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                  }
+                  .invoice-header-title {
+                    font-size: 15px !important;
+                    font-weight: 900 !important;
+                    color: #000000 !important;
+                    letter-spacing: -0.01em !important;
+                    margin: 0 0 0.5mm 0 !important;
+                    line-height: 1.15 !important;
+                  }
+                  .invoice-header-subtitle {
+                    font-size: 9.5px !important;
+                    font-weight: 500 !important;
+                    color: #334155 !important;
+                    margin: 0 0 0.5mm 0 !important;
+                    line-height: 1.15 !important;
+                  }
+                  .invoice-header-hotline {
+                    font-size: 9px !important;
+                    color: #475569 !important;
+                    margin: 0 0 1mm 0 !important;
+                    line-height: 1.15 !important;
+                  }
+                  .invoice-header-badge {
+                    display: inline-block !important;
+                    padding: 1px 8px !important;
+                    font-size: 9.5px !important;
+                    font-weight: 800 !important;
+                    color: #000000 !important;
+                    background: #f1f5f9 !important;
+                    border: 1px solid #000000 !important;
+                    border-radius: 9999px !important;
+                  }
+                  .customer-section {
+                    width: 100% !important;
+                    padding: 2mm 3mm !important;
+                    margin-bottom: 2mm !important;
+                    border: 1px solid #cbd5e1 !important;
+                    background: #f8fafc !important;
+                    border-radius: 6px !important;
+                    display: grid !important;
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 1.5mm 4mm !important;
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                  }
+                  .customer-section .label {
+                    font-size: 8px !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    color: #64748b !important;
+                    line-height: 1 !important;
+                    margin-bottom: 1px !important;
+                    display: block !important;
+                  }
+                  .customer-section .value {
+                    font-size: 9.5px !important;
+                    font-weight: 600 !important;
+                    color: #000000 !important;
+                    line-height: 1.2 !important;
+                    display: block !important;
+                  }
+                  .customer-section .full-row {
+                    grid-column: span 2 / span 2 !important;
+                    border-top: 1px solid #e2e8f0 !important;
+                    padding-top: 1.5mm !important;
+                    margin-top: 0.5mm !important;
+                  }
+                  .invoice-items {
+                    width: 100% !important;
+                    margin-bottom: 2mm !important;
+                    border: 1px solid #cbd5e1 !important;
+                    border-radius: 6px !important;
+                    overflow: hidden !important;
+                  }
+                  .invoice-table {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    table-layout: fixed !important;
+                    border-collapse: collapse !important;
+                    font-size: 9.5px !important;
+                  }
+                  .invoice-table thead {
+                    display: table-header-group !important;
+                    background: #f1f5f9 !important;
+                    border-bottom: 1px solid #cbd5e1 !important;
+                  }
+                  .invoice-table th {
+                    padding: 1.5mm 2mm !important;
+                    font-size: 8.5px !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    color: #000000 !important;
+                    letter-spacing: 0.02em !important;
+                  }
+                  .invoice-table tbody tr {
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                  }
+                  .invoice-table td {
+                    padding: 1.5mm 2mm !important;
+                    vertical-align: top !important;
+                    border-bottom: 1px solid #e2e8f0 !important;
+                    color: #000000 !important;
+                    font-size: 9.5px !important;
+                    line-height: 1.25 !important;
+                  }
+                  .invoice-table .col-num {
+                    width: 5% !important;
+                    text-align: center !important;
+                  }
+                  .invoice-table .col-desc {
+                    width: 53% !important;
+                  }
+                  .invoice-table .col-qty {
+                    width: 7% !important;
+                    text-align: center !important;
+                  }
+                  .invoice-table .col-unit {
+                    width: 16% !important;
+                    text-align: right !important;
+                  }
+                  .invoice-table .col-total {
+                    width: 19% !important;
+                    text-align: right !important;
+                  }
+                  .invoice-table .text-money {
+                    text-align: right !important;
+                    white-space: nowrap !important;
+                    font-variant-numeric: tabular-nums !important;
+                  }
+                  .invoice-table .wrap-text {
+                    word-break: break-word !important;
+                    overflow-wrap: anywhere !important;
+                  }
+                  .invoice-total {
+                    width: 100% !important;
+                    border-top: 1px solid #cbd5e1 !important;
+                    padding-top: 1.5mm !important;
+                    margin-top: 1.5mm !important;
+                    font-size: 9.5px !important;
+                    line-height: 1.25 !important;
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                  }
+                  .invoice-total .total-paid-row {
+                    font-size: 12.5px !important;
+                    font-weight: 900 !important;
+                    color: #000000 !important;
+                    padding-top: 1.5mm !important;
+                    margin-top: 1mm !important;
+                    border-top: 1.5px solid #000000 !important;
+                  }
+                  .signature-section {
+                    width: 100% !important;
+                    border-top: 1px solid #cbd5e1 !important;
+                    padding-top: 2.5mm !important;
+                    margin-top: 2.5mm !important;
+                    min-height: 16mm !important;
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                  }
+                  .signature-grid {
+                    width: 100% !important;
+                    display: grid !important;
+                    grid-template-columns: repeat(3, 1fr) !important;
+                    gap: 4mm !important;
+                    text-align: center !important;
+                    align-items: flex-end !important;
+                  }
+                  .signature-line {
+                    width: 100% !important;
+                    height: 8mm !important;
+                    border-bottom: 1px dashed #64748b !important;
+                    margin-bottom: 1mm !important;
+                  }
+                  .signature-seal-box {
+                    width: 28mm !important;
+                    height: 8mm !important;
+                    border: 1.5px dashed #64748b !important;
+                    border-radius: 6px !important;
+                    margin: 0 auto 1mm auto !important;
+                    background: transparent !important;
+                  }
+                  .signature-title {
+                    font-size: 8.5px !important;
+                    font-weight: 800 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.05em !important;
+                    color: #000000 !important;
+                    display: block !important;
+                    line-height: 1.1 !important;
+                  }
+                  .signature-subtitle {
+                    font-size: 7.5px !important;
+                    color: #64748b !important;
+                    display: block !important;
+                    line-height: 1.1 !important;
+                  }
+                  .invoice-footer {
+                    width: 100% !important;
+                    border-top: 1px solid #e2e8f0 !important;
+                    padding-top: 1.5mm !important;
+                    margin-top: 2mm !important;
+                    font-size: 8px !important;
+                    line-height: 1.25 !important;
+                    text-align: center !important;
+                    color: #475569 !important;
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                  }
+                  .invoice-footer p {
+                    margin: 0.5mm 0 !important;
+                  }
+                  .invoice-footer .thank-you {
+                    font-weight: 700 !important;
+                    color: #000000 !important;
                   }
                 }
               `}</style>
 
-              <div className="print-receipt-wrapper p-6 sm:p-8 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-slate-800 shadow-2xl text-xs space-y-3.5 print:p-0 print:border-none print:shadow-none print:text-black">
+              <div className="print-receipt-wrapper invoice-print p-6 sm:p-8 rounded-3xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-slate-800 shadow-2xl text-xs space-y-3.5 print:p-0 print:border-none print:shadow-none print:text-black">
                 {/* Store Header */}
-                <div className="text-center space-y-1 pb-3 border-b-2 border-slate-200 dark:border-slate-800">
-                  <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-slate-900 text-white dark:bg-brand-500 dark:text-navy-950 font-black text-base mb-1 print:bg-black print:text-white">
+                <div className="invoice-header text-center space-y-1 pb-3 border-b-2 border-slate-200 dark:border-slate-800">
+                  <div className="invoice-header-logo inline-flex items-center justify-center w-9 h-9 rounded-xl bg-slate-900 text-white dark:bg-brand-500 dark:text-navy-950 font-black text-base mb-1 print:bg-black print:text-white">
                     C
                   </div>
-                  <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase print:text-black">
+                  <h2 className="invoice-header-title text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase print:text-black">
                     CORENIX TECHNOLOGY RETAIL
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400 font-medium text-[11px] print:text-slate-700">
+                  <p className="invoice-header-subtitle text-slate-600 dark:text-slate-400 font-medium text-[11px] print:text-slate-700">
                     {completedOrder.branch.name} • {completedOrder.branch.address}
                   </p>
-                  <p className="text-slate-500 dark:text-slate-400 font-mono text-[10.5px] print:text-slate-600">
+                  <p className="invoice-header-hotline text-slate-500 dark:text-slate-400 font-mono text-[10.5px] print:text-slate-600">
                     Hotline: {completedOrder.branch.phone} | BIN/VAT Reg: 002938491-0101
                   </p>
                   <div className="pt-1">
-                    <span className="inline-block px-3 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-mono font-black text-slate-900 dark:text-brand-400 text-xs border border-slate-300 dark:border-slate-700 print:border-black print:bg-slate-100 print:text-black">
+                    <span className="invoice-header-badge inline-block px-3 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-mono font-black text-slate-900 dark:text-brand-400 text-xs border border-slate-300 dark:border-slate-700 print:border-black print:bg-slate-100 print:text-black">
                       INVOICE #{completedOrder.orderNumber}
                     </span>
                   </div>
                 </div>
 
                 {/* Metadata Grid */}
-                <div className="grid grid-cols-2 gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] print:bg-slate-50 print:border-slate-300">
+                <div className="customer-section grid grid-cols-2 gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] print:bg-slate-50 print:border-slate-300">
                   <div>
-                    <span className="text-slate-500 block text-[9.5px] uppercase font-bold">Sale Date &amp; Time</span>
-                    <span className="font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.formattedDate}</span>
+                    <span className="label text-slate-500 block text-[9.5px] uppercase font-bold">Sale Date &amp; Time</span>
+                    <span className="value font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.formattedDate}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9.5px] uppercase font-bold">Cashier / Store Manager</span>
-                    <span className="font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.cashier.name}</span>
+                    <span className="label text-slate-500 block text-[9.5px] uppercase font-bold">Cashier / Store Manager</span>
+                    <span className="value font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.cashier.name}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9.5px] uppercase font-bold">Customer Name</span>
-                    <span className="font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.customer.name}</span>
+                    <span className="label text-slate-500 block text-[9.5px] uppercase font-bold">Customer Name</span>
+                    <span className="value font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.customer.name}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9.5px] uppercase font-bold">Contact Phone</span>
-                    <span className="font-semibold text-slate-900 dark:text-white font-mono print:text-black">{completedOrder.customer.phone}</span>
+                    <span className="label text-slate-500 block text-[9.5px] uppercase font-bold">Contact Phone</span>
+                    <span className="value font-semibold text-slate-900 dark:text-white font-mono print:text-black">{completedOrder.customer.phone}</span>
                   </div>
                   {completedOrder.customer.address && (
-                    <div className="col-span-2 border-t border-slate-200 dark:border-slate-800/80 pt-1.5 mt-0.5">
-                      <span className="text-slate-500 block text-[9.5px] uppercase font-bold">Customer Address / Delivery</span>
-                      <span className="font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.customer.address}</span>
+                    <div className="full-row col-span-2 border-t border-slate-200 dark:border-slate-800/80 pt-1.5 mt-0.5">
+                      <span className="label text-slate-500 block text-[9.5px] uppercase font-bold">Customer Address / Delivery</span>
+                      <span className="value font-semibold text-slate-900 dark:text-white print:text-black">{completedOrder.customer.address}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Line Items Table with Complete Structured Info */}
-                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden print:border-slate-300">
-                  <table className="w-full text-left text-[10.5px] border-collapse">
+                <div className="invoice-items border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden print:border-slate-300">
+                  <table className="invoice-table w-full text-left text-[10.5px] border-collapse">
                     <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase font-bold text-[9.5px] border-b border-slate-200 dark:border-slate-700 print:bg-slate-100 print:text-black">
                       <tr>
-                        <th className="py-2 px-2 text-center w-8">#</th>
-                        <th className="py-2 px-3">Item Description, SKU &amp; Serial Details</th>
-                        <th className="py-2 px-2 text-center w-12">Qty</th>
-                        <th className="py-2 px-3 text-right w-24">Unit Price</th>
-                        <th className="py-2 px-3 text-right w-28">Total (৳)</th>
+                        <th className="col-num py-2 px-2 text-center w-8">#</th>
+                        <th className="col-desc py-2 px-3">Item Description, SKU &amp; Serial Details</th>
+                        <th className="col-qty py-2 px-2 text-center w-12">Qty</th>
+                        <th className="col-unit py-2 px-3 text-right w-24">Unit Price</th>
+                        <th className="col-total py-2 px-3 text-right w-28">Total (৳)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800 print:divide-slate-300">
                       {completedOrder.items.map((it: any, idx: number) => (
                         <tr key={idx} className="page-break-avoid">
-                          <td className="py-2 px-2 text-center font-mono text-slate-500 align-top">
+                          <td className="col-num py-2 px-2 text-center font-mono text-slate-500 align-top">
                             {idx + 1}
                           </td>
-                          <td className="py-2 px-3 align-top">
+                          <td className="col-desc py-2 px-3 align-top wrap-text">
                             <span className="font-bold text-slate-900 dark:text-white block print:text-black">
                               {it.productName || it.name}
                             </span>
@@ -749,13 +1031,13 @@ export default function PosPage() {
                               )}
                             </div>
                           </td>
-                          <td className="py-2 px-2 text-center font-bold text-slate-800 dark:text-slate-200 align-top print:text-black">
+                          <td className="col-qty py-2 px-2 text-center font-bold text-slate-800 dark:text-slate-200 align-top print:text-black">
                             {it.quantity || it.qty}
                           </td>
-                          <td className="py-2 px-3 text-right font-mono text-slate-700 dark:text-slate-300 align-top print:text-black">
+                          <td className="col-unit py-2 px-3 text-right font-mono text-money text-slate-700 dark:text-slate-300 align-top print:text-black">
                             ৳{Number(it.unitPrice).toLocaleString()}
                           </td>
-                          <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 dark:text-white align-top print:text-black">
+                          <td className="col-total py-2 px-3 text-right font-mono font-bold text-money text-slate-900 dark:text-white align-top print:text-black">
                             ৳{Number(it.totalPrice || it.unitPrice * (it.quantity || it.qty)).toLocaleString()}
                           </td>
                         </tr>
@@ -765,22 +1047,22 @@ export default function PosPage() {
                 </div>
 
                 {/* Totals Section */}
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-2 space-y-1 page-break-avoid">
+                <div className="invoice-total border-t border-slate-200 dark:border-slate-800 pt-2 space-y-1 page-break-avoid">
                   <div className="flex justify-between text-slate-600 dark:text-slate-400 text-xs">
                     <span>Subtotal:</span>
-                    <span className="font-mono font-semibold text-slate-900 dark:text-white print:text-black">
+                    <span className="font-mono font-semibold text-slate-900 dark:text-white print:text-black text-money">
                       ৳{completedOrder.subtotal.toLocaleString()}
                     </span>
                   </div>
                   {completedOrder.discount > 0 && (
                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400 text-xs">
                       <span>Discount Applied:</span>
-                      <span className="font-mono font-semibold">-৳{completedOrder.discount.toLocaleString()}</span>
+                      <span className="font-mono font-semibold text-money">-৳{completedOrder.discount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm sm:text-base font-black text-slate-900 dark:text-white pt-1.5 border-t border-slate-200 dark:border-slate-800 print:text-black">
+                  <div className="total-paid-row flex justify-between text-sm sm:text-base font-black text-slate-900 dark:text-white pt-1.5 border-t border-slate-200 dark:border-slate-800 print:text-black">
                     <span>Total Amount Paid:</span>
-                    <span className="text-sky-600 dark:text-brand-400 font-mono print:text-black">
+                    <span className="text-sky-600 dark:text-brand-400 font-mono print:text-black text-money">
                       ৳{completedOrder.grandTotal.toLocaleString()}
                     </span>
                   </div>
@@ -793,43 +1075,43 @@ export default function PosPage() {
                 </div>
 
                 {/* SIGNATURE & OFFICIAL COMPANY SEAL SECTION (CLEAN & BLANK FOR PHYSICAL SIGN / SEAL) */}
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-8 pb-3 page-break-avoid">
-                  <div className="grid grid-cols-3 gap-6 text-center items-end">
+                <div className="signature-section border-t border-slate-200 dark:border-slate-800 pt-8 pb-3 page-break-avoid">
+                  <div className="signature-grid grid grid-cols-3 gap-6 text-center items-end">
                     {/* 1. Received By (Customer Signature) */}
                     <div className="flex flex-col items-center justify-end">
-                      <div className="w-full border-b border-dashed border-slate-400 dark:border-slate-600 mb-2 h-14">
+                      <div className="signature-line w-full border-b border-dashed border-slate-400 dark:border-slate-600 mb-2 h-14">
                         {/* Blank line for customer signature */}
                       </div>
-                      <span className="font-bold text-slate-900 dark:text-slate-200 text-[10px] uppercase tracking-wider block print:text-black">
+                      <span className="signature-title font-bold text-slate-900 dark:text-slate-200 text-[10px] uppercase tracking-wider block print:text-black">
                         Received By
                       </span>
-                      <span className="text-[9px] text-slate-400 block print:text-slate-600">
+                      <span className="signature-subtitle text-[9px] text-slate-400 block print:text-slate-600">
                         (Customer Signature)
                       </span>
                     </div>
 
                     {/* 2. Sold By (Blank for Cashier Sign) */}
                     <div className="flex flex-col items-center justify-end">
-                      <div className="w-full border-b border-dashed border-slate-400 dark:border-slate-600 mb-2 h-14">
+                      <div className="signature-line w-full border-b border-dashed border-slate-400 dark:border-slate-600 mb-2 h-14">
                         {/* Blank line for cashier signature */}
                       </div>
-                      <span className="font-bold text-slate-900 dark:text-slate-200 text-[10px] uppercase tracking-wider block print:text-black">
+                      <span className="signature-title font-bold text-slate-900 dark:text-slate-200 text-[10px] uppercase tracking-wider block print:text-black">
                         Sold By
                       </span>
-                      <span className="text-[9px] text-slate-400 block print:text-slate-600">
+                      <span className="signature-subtitle text-[9px] text-slate-400 block print:text-slate-600">
                         (Store Manager / Cashier)
                       </span>
                     </div>
 
                     {/* 3. Authorized By & Company Seal Box (Completely Blank Inside) */}
                     <div className="flex flex-col items-center justify-end">
-                      <div className="w-32 h-14 border-2 border-dashed border-slate-400 dark:border-slate-600 rounded-xl mb-2 flex items-center justify-center bg-transparent">
+                      <div className="signature-seal-box w-32 h-14 border-2 border-dashed border-slate-400 dark:border-slate-600 rounded-xl mb-2 flex items-center justify-center bg-transparent">
                         {/* Completely blank for physical rubber stamp / seal */}
                       </div>
-                      <span className="font-bold text-slate-900 dark:text-slate-200 text-[10px] uppercase tracking-wider block print:text-black">
+                      <span className="signature-title font-bold text-slate-900 dark:text-slate-200 text-[10px] uppercase tracking-wider block print:text-black">
                         Authorized By
                       </span>
-                      <span className="text-[9px] text-slate-400 block print:text-slate-600">
+                      <span className="signature-subtitle text-[9px] text-slate-400 block print:text-slate-600">
                         (Company Seal &amp; Sign)
                       </span>
                     </div>
@@ -837,8 +1119,8 @@ export default function PosPage() {
                 </div>
 
                 {/* Terms & Warranty Policy Footer */}
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-3 text-[9.5px] text-slate-500 dark:text-slate-400 space-y-0.5 text-center leading-relaxed page-break-avoid print:text-slate-600">
-                  <p className="font-bold text-slate-700 dark:text-slate-300 print:text-black">
+                <div className="invoice-footer border-t border-slate-200 dark:border-slate-800 pt-3 text-[9.5px] text-slate-500 dark:text-slate-400 space-y-0.5 text-center leading-relaxed page-break-avoid print:text-slate-600">
+                  <p className="thank-you font-bold text-slate-700 dark:text-slate-300 print:text-black">
                     Thank you for choosing CORENIX TECHNOLOGY!
                   </p>
                   <p>{completedOrder.warrantyPolicy}</p>
