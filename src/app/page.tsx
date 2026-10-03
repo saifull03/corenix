@@ -18,19 +18,26 @@ import {
   MapPin,
   Flame,
   CheckCircle,
-  Truck
+  Truck,
+  Keyboard,
+  Mouse,
+  Headphones,
+  ShoppingBag,
 } from 'lucide-react';
 
 export const revalidate = 60; // ISR cache revalidation
 
 export default async function HomePage() {
-  // Fetch hero banners for left slider & right collage
-  const heroBanners = await query<any[]>(
-    `SELECT * FROM banners WHERE position = 'hero' AND is_active = 1 ORDER BY order_index ASC, id ASC`
+  // Fetch all active banners for dynamic management from Admin Panel
+  const allBanners = await query<any[]>(
+    `SELECT * FROM banners WHERE is_active = 1 ORDER BY order_index ASC, id ASC`
   );
-  const collageBanners = await query<any[]>(
-    `SELECT * FROM banners WHERE position = 'hero_collage' AND is_active = 1 ORDER BY order_index ASC, id ASC`
-  );
+
+  const heroBanners = allBanners?.filter(b => b.position === 'hero') || [];
+  const collageBanners = allBanners?.filter(b => b.position === 'hero_collage') || [];
+  const beforeLaptopBanners = allBanners?.filter(b => b.position === 'before_laptops') || [];
+  const afterLaptopBanners = allBanners?.filter(b => b.position === 'after_laptops') || [];
+  const afterAccessoriesBanners = allBanners?.filter(b => b.position === 'after_accessories') || [];
 
   const categories = await query<Category[]>(
     `SELECT id, name, slug, short_desc
@@ -39,7 +46,7 @@ export default async function HomePage() {
      ORDER BY order_index ASC LIMIT 8`
   );
 
-  // Fetch featured products (Deduplicated with subquery image)
+  // 1. Fetch featured products (Trending Products & Hot Deals)
   const featuredProducts = await query<Product[]>(
     `SELECT p.*,
             b.name as brand_name, b.slug as brand_slug,
@@ -54,6 +61,73 @@ export default async function HomePage() {
      ORDER BY (p.is_featured = 1 OR p.is_hot = 1) DESC, p.is_featured DESC, p.is_hot DESC, p.created_at DESC
      LIMIT 8`
   );
+
+  // 2. Fetch Gaming & High-Performance Laptops
+  const rawLaptops = await query<Product[]>(
+    `SELECT p.*,
+            b.name as brand_name, b.slug as brand_slug,
+            c.name as category_name, c.slug as category_slug,
+            (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as primary_image,
+            (SELECT SUM(quantity - reserved_qty) FROM inventory WHERE product_id = p.id) as total_stock
+     FROM products p
+     JOIN brands b ON p.brand_id = b.id
+     JOIN categories c ON p.category_id = c.id
+     WHERE p.status = 'published' AND (
+       c.slug LIKE '%laptop%' OR
+       c.name LIKE '%laptop%' OR
+       p.name LIKE '%laptop%' OR
+       p.name LIKE '%rog%' OR
+       p.name LIKE '%tuf%' OR
+       p.name LIKE '%legion%' OR
+       p.name LIKE '%predator%' OR
+       p.name LIKE '%alienware%' OR
+       p.name LIKE '%victus%' OR
+       p.name LIKE '%zephyrus%' OR
+       p.name LIKE '%strix%' OR
+       p.name LIKE '%omen%'
+     )
+     GROUP BY p.id
+     ORDER BY (p.is_featured = 1 OR p.is_hot = 1) DESC, p.created_at DESC
+     LIMIT 8`
+  );
+
+  // Fallback to top products if category count is small
+  const gamingLaptops = rawLaptops && rawLaptops.length > 0 ? rawLaptops : featuredProducts.slice(0, 4);
+
+  // 3. Fetch Gaming Peripherals & Accessories
+  const rawAccessories = await query<Product[]>(
+    `SELECT p.*,
+            b.name as brand_name, b.slug as brand_slug,
+            c.name as category_name, c.slug as category_slug,
+            (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as primary_image,
+            (SELECT SUM(quantity - reserved_qty) FROM inventory WHERE product_id = p.id) as total_stock
+     FROM products p
+     JOIN brands b ON p.brand_id = b.id
+     JOIN categories c ON p.category_id = c.id
+     WHERE p.status = 'published' AND (
+       c.slug LIKE '%keyboard%' OR
+       c.slug LIKE '%mouse%' OR
+       c.slug LIKE '%headset%' OR
+       c.slug LIKE '%monitor%' OR
+       c.slug LIKE '%accessories%' OR
+       c.slug LIKE '%cooling%' OR
+       c.slug LIKE '%cooler%' OR
+       c.slug LIKE '%chair%' OR
+       c.slug LIKE '%speaker%' OR
+       c.slug LIKE '%ups%' OR
+       p.name LIKE '%keyboard%' OR
+       p.name LIKE '%mouse%' OR
+       p.name LIKE '%headset%' OR
+       p.name LIKE '%monitor%' OR
+       p.name LIKE '%cooler%' OR
+       p.name LIKE '%headphone%'
+     )
+     GROUP BY p.id
+     ORDER BY (p.is_featured = 1 OR p.is_hot = 1) DESC, p.created_at DESC
+     LIMIT 8`
+  );
+
+  const accessoryProducts = rawAccessories && rawAccessories.length > 0 ? rawAccessories : featuredProducts.slice(2, 6);
 
   // Fetch official brands
   const brands = await query<Brand[]>(
@@ -72,6 +146,8 @@ export default async function HomePage() {
       case 'storage': return <HardDrive className="w-6 h-6 text-emerald-400" />;
       case 'monitors': return <Monitor className="w-6 h-6 text-blue-400" />;
       case 'gaming-laptop': return <Laptop className="w-6 h-6 text-rose-400" />;
+      case 'keyboard': return <Keyboard className="w-6 h-6 text-indigo-400" />;
+      case 'mouse': return <Mouse className="w-6 h-6 text-cyan-400" />;
       default: return <Cpu className="w-6 h-6 text-brand-400" />;
     }
   };
@@ -116,7 +192,7 @@ export default async function HomePage() {
           <div className="flex items-end justify-between mb-8">
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-brand-400 mb-1">
-                Browse Components & Systems
+                Browse Components &amp; Systems
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                 Featured Hardware Categories
@@ -154,7 +230,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* FEATURED PRODUCTS GRID */}
+        {/* 1. FEATURED PRODUCTS GRID: TRENDING PRODUCTS & HOT DEALS */}
         <section className="py-16 bg-white/70 dark:bg-navy-900/40 border-y border-slate-200/80 dark:border-slate-800/80">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-end justify-between mb-8">
@@ -163,7 +239,7 @@ export default async function HomePage() {
                   High Demand Hardware
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-                  Trending Products & Hot Deals
+                  Trending Products &amp; Hot Deals
                 </h2>
               </div>
               <Link href="/products" className="text-xs font-bold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-brand-400 flex items-center gap-1">
@@ -178,6 +254,128 @@ export default async function HomePage() {
               ))}
             </div>
           </div>
+        </section>
+
+        {/* 2. TWO BANNERS SIDE BY SIDE (BEFORE GAMING LAPTOP) */}
+        <section className="py-8 max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Link
+              href={beforeLaptopBanners[0]?.link_url || '/category/graphics-card'}
+              className="block overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.01] border border-slate-200/70 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+            >
+              <img
+                src={beforeLaptopBanners[0]?.image_url || '/uploads/banners/banner_1790852883193_714.png'}
+                alt={beforeLaptopBanners[0]?.title || 'Hardware Banner'}
+                className="w-full h-full max-h-[260px] object-cover rounded-2xl sm:rounded-3xl"
+              />
+            </Link>
+
+            <Link
+              href={beforeLaptopBanners[1]?.link_url || '/category/processor'}
+              className="block overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.01] border border-slate-200/70 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+            >
+              <img
+                src={beforeLaptopBanners[1]?.image_url || '/uploads/banners/banner_1790852945607_5718.png'}
+                alt={beforeLaptopBanners[1]?.title || 'Components Banner'}
+                className="w-full h-full max-h-[260px] object-cover rounded-2xl sm:rounded-3xl"
+              />
+            </Link>
+          </div>
+        </section>
+
+        {/* 3. GAMING LAPTOPS SECTION */}
+        <section className="py-16 bg-white/70 dark:bg-navy-900/40 border-y border-slate-200/80 dark:border-slate-800/80">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1 flex items-center gap-1.5">
+                  <Laptop className="w-4 h-4" />
+                  <span>Portable High-FPS Power</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+                  Gaming &amp; High-Performance Laptops
+                </h2>
+              </div>
+              <Link href="/category/gaming-laptop" className="text-xs font-bold text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 flex items-center gap-1">
+                <span>See All Laptops</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {gamingLaptops.map((prod, idx) => (
+                <ProductCard key={`laptop-prod-${prod.id}-${idx}`} product={prod} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 4. TWO BANNERS SIDE BY SIDE (AFTER GAMING LAPTOP) */}
+        <section className="py-8 max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Link
+              href={afterLaptopBanners[0]?.link_url || '/category/monitors'}
+              className="block overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.01] border border-slate-200/70 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+            >
+              <img
+                src={afterLaptopBanners[0]?.image_url || '/uploads/banners/banner_1790852302848_6718.png'}
+                alt={afterLaptopBanners[0]?.title || 'Display Gear Banner'}
+                className="w-full h-full max-h-[260px] object-cover rounded-2xl sm:rounded-3xl"
+              />
+            </Link>
+
+            <Link
+              href={afterLaptopBanners[1]?.link_url || '/products'}
+              className="block overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.01] border border-slate-200/70 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+            >
+              <img
+                src={afterLaptopBanners[1]?.image_url || '/uploads/banners/banner_1790862505555_6522.png'}
+                alt={afterLaptopBanners[1]?.title || 'Thermal Gear & Chassis Banner'}
+                className="w-full h-full max-h-[260px] object-cover rounded-2xl sm:rounded-3xl"
+              />
+            </Link>
+          </div>
+        </section>
+
+        {/* 5. GAMING PERIPHERALS & ACCESSORIES SECTION */}
+        <section className="py-16 bg-white/70 dark:bg-navy-900/40 border-y border-slate-200/80 dark:border-slate-800/80">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-brand-400 mb-1 flex items-center gap-1.5">
+                  <Keyboard className="w-4 h-4" />
+                  <span>Competitive Esports Gear</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+                  Gaming Peripherals &amp; Accessories
+                </h2>
+              </div>
+              <Link href="/products" className="text-xs font-bold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-brand-400 flex items-center gap-1">
+                <span>See All Accessories</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {accessoryProducts.map((prod, idx) => (
+                <ProductCard key={`acc-prod-${prod.id}-${idx}`} product={prod} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 6. ONE WIDE BANNER (AFTER ACCESSORIES) */}
+        <section className="py-8 max-w-7xl mx-auto px-4">
+          <Link
+            href={afterAccessoriesBanners[0]?.link_url || '/rma'}
+            className="block overflow-hidden rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.005] border border-slate-200/70 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+          >
+            <img
+              src={afterAccessoriesBanners[0]?.image_url || '/uploads/banners/banner_1790852103647_6478.png'}
+              alt={afterAccessoriesBanners[0]?.title || 'Official Warranty Hub Banner'}
+              className="w-full h-auto max-h-[300px] object-cover rounded-2xl sm:rounded-3xl"
+            />
+          </Link>
         </section>
 
         {/* INTERACTIVE PC BUILDER CALLOUT BANNER */}

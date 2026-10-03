@@ -38,12 +38,17 @@ interface Banner {
 }
 
 const POSITIONS_CONFIG = [
-  { value: 'hero', label: 'Hero Slider (Left Slide Carousel)', shortLabel: 'Hero Slider' },
-  { value: 'hero_collage', label: 'Hero Collage (Right 2 Cards - Image Link)', shortLabel: 'Hero Collage' },
-  { value: 'sidebar', label: 'Sidebar Banner', shortLabel: 'Sidebar' },
-  { value: 'middle', label: 'Middle Promo Banner', shortLabel: 'Middle' },
-  { value: 'footer', label: 'Footer Banner', shortLabel: 'Footer' },
+  { value: 'hero', label: 'Hero Slider (Left Slide Carousel)', shortLabel: 'Hero Slider', isPicture: false, guide: 'Recommended size: ~1600 × 600px. Includes headline titles, badge text, and action buttons.' },
+  { value: 'hero_collage', label: 'Hero Collage (Right 2 Cards)', shortLabel: 'Hero Collage', isPicture: true, guide: 'Recommended size: ~800 × 400px (2:1). Pure clickable picture banner.' },
+  { value: 'before_laptops', label: '2 Banners (Before Gaming Laptops)', shortLabel: 'Before Laptops', isPicture: true, guide: 'Recommended size: ~800 × 380px. Pure picture banner side-by-side.' },
+  { value: 'after_laptops', label: '2 Banners (After Gaming Laptops)', shortLabel: 'After Laptops', isPicture: true, guide: 'Recommended size: ~800 × 380px. Pure picture banner side-by-side.' },
+  { value: 'after_accessories', label: '1 Wide Banner (After Accessories)', shortLabel: 'After Accessories', isPicture: true, guide: 'Recommended size: ~1400 × 350px. Pure clickable full-width picture banner.' },
+  { value: 'sidebar', label: 'Sidebar Banner', shortLabel: 'Sidebar', isPicture: false, guide: 'Recommended size: ~400 × 600px.' },
+  { value: 'footer', label: 'Footer Banner', shortLabel: 'Footer', isPicture: false, guide: 'Recommended size: ~1200 × 300px.' },
 ];
+
+const isPictureBanner = (pos: string) =>
+  ['hero_collage', 'before_laptops', 'after_laptops', 'after_accessories'].includes(pos);
 
 const POSITIONS = POSITIONS_CONFIG.map(p => p.value);
 
@@ -183,7 +188,8 @@ export default function AdminBannersPage() {
       showToast('error', 'Banner image is required.');
       return;
     }
-    if (form.position !== 'hero_collage' && !form.title.trim()) {
+    const isPic = isPictureBanner(form.position);
+    if (!isPic && !form.title.trim()) {
       showToast('error', 'Title is required.');
       return;
     }
@@ -191,7 +197,7 @@ export default function AdminBannersPage() {
     try {
       const payload = {
         id: editingBanner?.id,
-        title: form.title.trim() || (form.position === 'hero_collage' ? 'Collage Picture' : 'Untitled Banner'),
+        title: form.title.trim() || (isPic ? `${form.position} Picture Banner` : 'Untitled Banner'),
         subtitle: form.subtitle,
         description: form.description,
         imageUrl: form.image_url.trim(),
@@ -202,7 +208,7 @@ export default function AdminBannersPage() {
         badgeText: form.badge_text,
         textColor: form.text_color,
         position: form.position,
-        orderIndex: form.order_index,
+        orderIndex: Number(form.order_index) || 0,
         isActive: Boolean(form.is_active),
       };
 
@@ -639,11 +645,15 @@ export default function AdminBannersPage() {
                 </select>
               </div>
 
-              {form.position === 'hero_collage' ? (
-                /* Simplified Form for Collage Cards (Clean Picture Link) */
+              {isPictureBanner(form.position) ? (
+                /* Simplified Form for Picture Banners (Clean Picture Link) */
                 <div className="space-y-4">
-                  <div className="p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-700 dark:text-sky-300 text-xs">
-                    💡 <strong>Hero Collage Card:</strong> Collage cards on the right of the hero section are displayed as clean, full-bleed pictures with no text or blur. You only need to upload the image and set the destination Link URL!
+                  <div className="p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-700 dark:text-sky-300 text-xs leading-relaxed">
+                    💡 <strong>Picture Banner Mode:</strong> This position is displayed as a clean, full-bleed picture banner with no text overlay or buttons.
+                    <br />
+                    <span className="font-semibold text-sky-800 dark:text-sky-200">
+                      {POSITIONS_CONFIG.find(p => p.value === form.position)?.guide}
+                    </span>
                   </div>
 
                   <div>
@@ -655,20 +665,20 @@ export default function AdminBannersPage() {
                       required
                       value={form.link_url}
                       onChange={e => setForm(f => ({ ...f, link_url: e.target.value }))}
-                      placeholder="/products or /category/graphics-card"
+                      placeholder="/category/graphics-card or /products"
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                      Admin Reference Label (Optional)
+                      Reference Title / Alt Text (Optional)
                     </label>
                     <input
                       type="text"
                       value={form.title}
                       onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                      placeholder="e.g. Collage Card 2 - Pre-Built Desktops"
+                      placeholder="e.g. GeForce RTX 50 Banner or Gaming Monitor Deal"
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-sky-500 dark:focus:border-sky-400 transition-colors"
                     />
                   </div>
