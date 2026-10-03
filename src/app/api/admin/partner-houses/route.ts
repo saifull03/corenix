@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { getCurrentUser, canManagePurchases, canPurchaseProducts } from '@/lib/auth';
 
 async function ensurePartnerHousesTable() {
   await query(`
@@ -51,19 +52,75 @@ async function ensurePartnerHousesTable() {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user || !canPurchaseProducts(user)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized. Access restricted.' }, { status: 403 });
+    }
+
     await ensurePartnerHousesTable();
 
-    // Fetch houses with summary stats from other_house_purchases
+    // Ensure sales table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS other_house_sales (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        invoice_no VARCHAR(50) NOT NULL UNIQUE,
+        house_name VARCHAR(150) NOT NULL,
+        house_contact VARCHAR(100) NULL,
+        house_phone VARCHAR(50) NULL,
+        house_address TEXT NULL,
+        branch_id INT NOT NULL,
+        product_id INT NULL,
+        product_name VARCHAR(255) NOT NULL,
+        product_brand VARCHAR(100) NULL,
+        product_category VARCHAR(100) NULL,
+        product_model VARCHAR(100) NULL,
+        serial_number VARCHAR(255) NOT NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        cost_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        unit_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        warranty_period VARCHAR(100) NULL DEFAULT '1 Year Official Warranty',
+        is_lend BOOLEAN NOT NULL DEFAULT TRUE,
+        payment_status ENUM('lend', 'paid', 'partially_paid') NOT NULL DEFAULT 'lend',
+        paid_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        due_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        payment_method VARCHAR(50) NULL,
+        payment_reference VARCHAR(100) NULL,
+        paid_at DATETIME NULL,
+        received_by_name VARCHAR(100) NULL,
+        payment_notes TEXT NULL,
+        status ENUM('completed', 'delivered', 'returned_by_house', 'cancelled') NOT NULL DEFAULT 'completed',
+        notes TEXT NULL,
+        created_by INT NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // Fetch houses with summary stats from both purchases and sales
     const houses = await query<any[]>(`
       SELECT ph.*,
-        COUNT(ohp.id) as total_transactions,
+        COUNT(DISTINCT ohp.id) as total_purchases_count,
         COALESCE(SUM(ohp.total_cost), 0) as total_purchase_amount,
-        COALESCE(SUM(ohp.paid_amount), 0) as total_paid_amount,
-        COALESCE(SUM(CASE WHEN ohp.payment_status IN ('lend', 'partially_paid') THEN ohp.due_amount ELSE 0 END), 0) as total_lend_due
+        COALESCE(SUM(ohp.paid_amount), 0) as total_purchase_paid,
+        COALESCE(SUM(CASE WHEN ohp.payment_status IN ('lend', 'partially_paid') THEN ohp.due_amount ELSE 0 END), 0) as total_lend_due,
+        COALESCE(sales_stat.total_sales_count, 0) as total_sales_count,
+        COALESCE(sales_stat.total_sales_amount, 0) as total_sales_amount,
+        COALESCE(sales_stat.total_sales_paid, 0) as total_sales_paid,
+        COALESCE(sales_stat.total_sales_due, 0) as total_sales_due
       FROM partner_houses ph
       LEFT JOIN other_house_purchases ohp ON ph.name = ohp.house_name
+      LEFT JOIN (
+        SELECT house_name,
+               COUNT(id) as total_sales_count,
+               SUM(total_amount) as total_sales_amount,
+               SUM(paid_amount) as total_sales_paid,
+               SUM(CASE WHEN payment_status IN ('lend', 'partially_paid') THEN due_amount ELSE 0 END) as total_sales_due
+        FROM other_house_sales
+        GROUP BY house_name
+      ) sales_stat ON ph.name = sales_stat.house_name
       GROUP BY ph.id
       ORDER BY ph.name ASC
     `);
@@ -80,6 +137,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user || !canManagePurchases(user)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized. Only Accounts Manager, Admin, and HR can manage partner houses.' }, { status: 403 });
+    }
+
     await ensurePartnerHousesTable();
     const body = await req.json();
     const { name, contact_person, phone, address, notes } = body;
@@ -128,6 +190,11 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user || !canManagePurchases(user)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized. Only Accounts Manager, Admin, and HR can manage partner houses.' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 

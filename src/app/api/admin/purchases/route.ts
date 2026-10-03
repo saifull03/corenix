@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { getCurrentUser, canManagePurchases, canPurchaseProducts } from '@/lib/auth';
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!canPurchaseProducts(user)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to access purchases' }, { status: 403 });
+    }
+
     const pos = await query<any[]>(
       `SELECT po.*,
               s.name as supplier_name, s.code as supplier_code, s.contact_person, s.phone as supplier_phone,
@@ -26,8 +36,22 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!canPurchaseProducts(user)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to create purchases' }, { status: 403 });
+    }
+
     const body = await req.json();
-    const { supplierId, branchId, totalAmount, paidAmount = 0, transportCost = 0, notes } = body;
+    let { supplierId, branchId, totalAmount, paidAmount = 0, transportCost = 0, notes } = body;
+
+    // If Store Manager, lock branch to their assigned branch
+    if (!canManagePurchases(user) && user.branch_id) {
+      branchId = user.branch_id;
+    }
 
     if (!supplierId || !branchId || !totalAmount) {
       return NextResponse.json({ success: false, error: 'Supplier, Branch, and Total Amount are required.' }, { status: 400 });
@@ -39,8 +63,8 @@ export async function POST(req: NextRequest) {
       `INSERT INTO purchase_orders (
         po_number, supplier_id, branch_id, status, total_amount, paid_amount,
         transport_cost, notes, created_by
-      ) VALUES (?, ?, ?, 'ordered', ?, ?, ?, ?, 1)`,
-      [poNumber, supplierId, branchId, totalAmount, paidAmount, transportCost, notes || null]
+      ) VALUES (?, ?, ?, 'ordered', ?, ?, ?, ?, ?)`,
+      [poNumber, supplierId, branchId, totalAmount, paidAmount, transportCost, notes || null, user.id]
     );
 
     const newId = (result as any).insertId;
@@ -49,7 +73,7 @@ export async function POST(req: NextRequest) {
       module: 'purchases',
       action: 'create_purchase_order',
       recordId: newId,
-      newData: { poNumber, supplierId, totalAmount },
+      newData: { poNumber, supplierId, totalAmount, createdBy: user.id },
     });
 
     return NextResponse.json({ success: true, message: 'Purchase Order created', poNumber, id: newId });
@@ -61,6 +85,15 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!canManagePurchases(user)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: Only Accounts Manager, Admin, and HR can manage purchase orders' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { id, status } = body;
 
@@ -69,7 +102,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     await query(`UPDATE purchase_orders SET status = ? WHERE id = ?`, [status, id]);
-    await logAudit({ module: 'purchases', action: 'update_po_status', recordId: id, newData: { status } });
+    await logAudit({ module: 'purchases', action: 'update_po_status', recordId: id, newData: { status, updatedBy: user.id } });
 
     return NextResponse.json({ success: true, message: 'PO status updated' });
   } catch (error: any) {

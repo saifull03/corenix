@@ -363,7 +363,105 @@ html:not(.dark) th {
     print-color-adjust: exact !important;
   }
 
-  .print\:hidden {
+  .print\:hidden, .no-print {
     display: none !important;
   }
+
+  /* Force clean top-aligned A4 display for Stock Transfer Challan */
+  .challan-print-overlay {
+    position: static !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    inset: auto !important;
+    z-index: auto !important;
+  }
+
+  .challan-modal-card {
+    position: static !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  #transfer-challan-printable {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #transfer-challan-printable table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #transfer-challan-printable tr {
+    page-break-inside: avoid !important;
+  }
+
+  #transfer-challan-printable th,
+  #transfer-challan-printable td {
+    padding: 3px 5px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Two-Way Partner House Ledger & Statement A4 Print Optimizations */
+  #ledger-official-print-report {
+    position: static !important;
+    width: 100% !important;
+    max-width: 186mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-size: 7.5pt !important;
+  }
+
+  #ledger-official-print-report table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #ledger-official-print-report thead {
+    display: table-header-group !important;
+  }
+
+  #ledger-official-print-report tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #ledger-official-print-report th,
+  #ledger-official-print-report td {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
+
+

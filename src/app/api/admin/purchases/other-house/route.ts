@@ -1,13 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { getCurrentUser, canManagePurchases, canPurchaseProducts } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!canPurchaseProducts(user)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to access purchases' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const paymentStatus = searchParams.get('payment_status') || 'all'; // 'all', 'lend', 'paid', 'partially_paid'
-    const branchId = searchParams.get('branch_id');
+    let branchId = searchParams.get('branch_id');
+
+    // If Store Manager, lock/filter to their assigned branch if requested
+    if (!canManagePurchases(user) && user.branch_id && !branchId) {
+      branchId = String(user.branch_id);
+    }
 
     let sql = `
       SELECT ohp.*,
@@ -102,8 +117,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!canPurchaseProducts(user)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: You do not have permission to record purchases' }, { status: 403 });
+    }
+
     const body = await req.json();
-    const {
+    let {
       houseName,
       houseContact = '',
       housePhone = '',
@@ -130,6 +154,11 @@ export async function POST(req: NextRequest) {
       notes = '',
       addToInventory = true,
     } = body;
+
+    // If Store Manager, lock branch to their assigned branch
+    if (!canManagePurchases(user) && user.branch_id) {
+      branchId = user.branch_id;
+    }
 
     if (!houseName || !branchId || !productName || !serialNumber || unitCost === undefined) {
       return NextResponse.json(
@@ -230,6 +259,35 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Record upfront payment in partner_house_payments if paid
+    if (initialPaid > 0) {
+      try {
+        await query(
+          `INSERT INTO partner_house_payments (
+            house_name, branch_id, type, purchase_id, reference_no,
+            product_name, serial_number, amount, payment_method, payment_reference,
+            notes, received_by_name, recorded_by, created_at
+          ) VALUES (?, ?, 'purchase_payment', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+          [
+            houseName.trim(),
+            branchId,
+            newId,
+            trackingNumber,
+            productName.trim(),
+            serialNumber.trim(),
+            initialPaid,
+            paymentMethod || 'Cash',
+            paymentReference?.trim() || null,
+            paymentNotes?.trim() || 'Initial payment on purchase',
+            paidByName?.trim() || user.name || 'Accounts Officer',
+            user.id || 1,
+          ]
+        );
+      } catch (phpErr) {
+        console.warn('partner_house_payments logging error:', phpErr);
+      }
+    }
+
     await logAudit({
       module: 'purchases',
       action: 'other_house_purchase_created',
@@ -260,6 +318,15 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!canManagePurchases(user)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: Only Accounts Manager, Admin, and HR can manage lend settlements' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { action, id } = body;
 
@@ -278,7 +345,7 @@ export async function PATCH(req: NextRequest) {
         paymentAmount,
         paymentMethod = 'Cash',
         paymentReference = '',
-        paidByName = 'Admin',
+        paidByName = user.name || 'Accounts Officer',
         paymentNotes = '',
         paidAtDate,
       } = body;
@@ -311,11 +378,39 @@ export async function PATCH(req: NextRequest) {
           paymentMethod,
           paymentReference || null,
           paymentDate,
-          paidByName || 'Admin',
-          `[${paymentDate.toLocaleString()}] Paid ৳${amountToPay.toLocaleString()} via ${paymentMethod}${paymentReference ? ' (Ref: ' + paymentReference + ')' : ''}. Settled by: ${paidByName || 'Admin'}. ${paymentNotes || ''}`.trim(),
+          paidByName || user.name || 'Accounts Officer',
+          `[${paymentDate.toLocaleString()}] Paid ৳${amountToPay.toLocaleString()} via ${paymentMethod}${paymentReference ? ' (Ref: ' + paymentReference + ')' : ''}. Settled by: ${paidByName || user.name}. ${paymentNotes || ''}`.trim(),
           id,
         ]
       );
+
+      // Record day-by-day payment entry in partner_house_payments
+      try {
+        await query(
+          `INSERT INTO partner_house_payments (
+            house_name, branch_id, type, purchase_id, reference_no,
+            product_name, serial_number, amount, payment_method, payment_reference,
+            notes, received_by_name, recorded_by, created_at
+          ) VALUES (?, ?, 'purchase_payment', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            current.house_name,
+            current.branch_id,
+            id,
+            current.tracking_number,
+            current.product_name,
+            current.serial_number,
+            amountToPay,
+            paymentMethod,
+            paymentReference || null,
+            paymentNotes || 'Lend settlement payment',
+            paidByName || user.name || 'Accounts Officer',
+            user.id || 1,
+            paymentDate,
+          ]
+        );
+      } catch (phpErr) {
+        console.warn('partner_house_payments log error:', phpErr);
+      }
 
       await logAudit({
         module: 'purchases',
@@ -328,7 +423,8 @@ export async function PATCH(req: NextRequest) {
           paymentStatus: newStatus,
           paidAt: paymentDate,
           paymentMethod,
-          paidByName,
+          paidByName: paidByName || user.name,
+          settledByUserId: user.id,
         },
       });
 
@@ -357,7 +453,7 @@ export async function PATCH(req: NextRequest) {
         module: 'purchases',
         action: 'other_house_status_updated',
         recordId: id,
-        newData: { status, notes },
+        newData: { status, notes, updatedBy: user.id },
       });
 
       return NextResponse.json({ success: true, message: `Status updated to ${status}` });
@@ -372,6 +468,15 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!canManagePurchases(user)) {
+      return NextResponse.json({ success: false, error: 'Forbidden: Only Accounts Manager, Admin, and HR can delete purchase records' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
@@ -391,6 +496,7 @@ export async function DELETE(req: NextRequest) {
       action: 'other_house_purchase_deleted',
       recordId: Number(id),
       oldData: current,
+      newData: { deletedBy: user.id },
     });
 
     return NextResponse.json({ success: true, message: 'Record deleted successfully' });

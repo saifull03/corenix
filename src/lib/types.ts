@@ -263,7 +263,52 @@ export interface PartnerHouse {
   total_purchase_amount?: number;
   total_paid_amount?: number;
   total_lend_due?: number;
+  total_purchases_count?: number;
+  total_purchase_paid?: number;
+  total_sales_count?: number;
+  total_sales_amount?: number;
+  total_sales_paid?: number;
+  total_sales_due?: number;
   current_due?: number;
   created_at?: string;
   updated_at?: string;
 }
+
+export interface OtherHouseSale {
+  id: number;
+  invoice_no: string;
+  house_name: string;
+  house_contact?: string;
+  house_phone?: string;
+  house_address?: string;
+  branch_id: number;
+  branch_name?: string;
+  branch_code?: string;
+  product_id?: number;
+  product_name: string;
+  product_brand?: string;
+  product_category?: string;
+  product_model?: string;
+  serial_number: string;
+  quantity: number;
+  cost_price: number;
+  unit_price: number;
+  total_amount: number;
+  warranty_period?: string;
+  is_lend: boolean;
+  payment_status: 'lend' | 'paid' | 'partially_paid';
+  paid_amount: number;
+  due_amount: number;
+  payment_method?: string;
+  payment_reference?: string;
+  paid_at?: string | null;
+  received_by_name?: string;
+  payment_notes?: string;
+  status: 'completed' | 'delivered' | 'returned_by_house' | 'cancelled';
+  notes?: string;
+  created_by: number;
+  created_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+

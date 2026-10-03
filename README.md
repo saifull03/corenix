@@ -1,16 +1,18 @@
 # CORENIX — Enterprise Technology & Computer Retail Platform
 
-CORENIX is a full-stack, production-ready computer and technology e-commerce ecosystem built from scratch. It unifies **E-commerce**, **Multi-Branch Inventory Management**, **Purchasing / Procurement**, **POS Counter Sales**, **Central Warehouse Logistics**, **RMA & Service Hub Management**, **Interactive PC Builder**, **Advanced Search**, **Programmatic SEO CMS**, **Business Reporting**, and **ERP Integration** into **ONE centralized system**.
+CORENIX is an enterprise-grade, full-stack computer and technology retail ecosystem built with Next.js 15, React 19, TypeScript, Tailwind CSS, and MySQL/MariaDB. It unifies **E-Commerce**, **Multi-Branch Inventory**, **Procurement & POs**, **High-Speed POS Counter Sales**, **RMA & Service Hub Management**, **Interactive PC Builder**, **Enterprise RBAC**, **Super Admin Audit Trail**, and **Programmatic SEO** into **ONE centralized platform**.
 
 ---
 
 ## 🚀 Key Highlights & Architecture
 
-- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons
-- **Backend**: Node.js, Next.js Server Actions, REST API routes, modular service architecture
-- **Database**: MySQL (`corenix_db` via XAMPP) with 51 normalized tables, foreign keys, full-text indexes, and audit logs
-- **Search**: Multi-faceted search engine with live autocomplete, typo-tolerance, and zero-results search analytics tracking
-- **Design System**: Sleek cyber/tech dark mode (`#0B0F19`), electric cyan/teal accents, rounded cards, glassmorphism panels, and product-focused layout
+- **Frontend Framework**: Next.js 15 (App Router), React 19, TypeScript, Vanilla & Tailwind CSS, Lucide Icons
+- **Backend Architecture**: Next.js Server Components, Server Actions, Route Handlers, modular service layer
+- **Database**: MySQL / MariaDB (`corenix_db` via XAMPP) with 51 normalized tables, foreign keys, and audit log indexing
+- **Security & Access Control (RBAC)**:
+  - Role-based permissions matrix supporting custom roles
+  - **Super Admin Governance**: Strict restriction on user creation, role definitions, and system activity logs
+  - Immutable audit trail capturing operator identity, timestamp, module, record ID, IP origin, and before/after JSON diffs
 - **Multi-Location Accounting**:
   - `WH-MAIN`: Central Main Warehouse (Tejgaon Industrial Area)
   - `SHOP-1`: Flagship Showroom (Uttara Sector 3)
@@ -23,62 +25,89 @@ CORENIX is a full-stack, production-ready computer and technology e-commerce eco
 
 | Route | Description |
 |---|---|
-| `/` | Dynamic Homepage with hero banners, featured categories, spotlight deals, brand directory & branch showcase |
-| `/products` | Full Technology Catalogue with category and brand faceted filtering |
-| `/product/[slug]` | Product Detail page with multi-location stock breakdown, rich specs, warranty info, and schema markup |
-| `/category/[slug]` | Category page with category-specific filters, H1, SEO text, and sorting |
-| `/brand/[slug]` | Official Brand Hub with brand introduction, official warranty badge, and brand products |
-| `/pc-builder` | Interactive Custom PC Builder with real-time socket & RAM compatibility validation, wattage calculator, and share link |
-| `/search?q=...` | Search results page with instant facets, query tracking, and zero-result analytics |
+| `/` | Dynamic Homepage featuring hero banners, featured categories, trending hardware, hot deals, and official brands showcase |
+| `/products` | Technology Catalogue with category, brand, price, and specs faceted filtering |
+| `/product/[slug]` | Product Detail page with real-time multi-location stock breakdown, rich specs table, and warranty badges |
+| `/category/[slug]` | Category archive with dynamic specification filters, SEO headings, and price sorting |
+| `/brand/[slug]` | Official Brand Hub with brand descriptions, authorized warranty info, and brand catalogues |
+| `/pc-builder` | Interactive Custom PC Builder with real-time socket & RAM validation, wattage calculator, and 1-click shareable build links |
+| `/search?q=...` | Instant search engine with autocomplete, keyword facets, and zero-result analytics tracking |
 | `/cart` | Interactive Shopping Cart with live quantity adjustments and promo discount coupon (`CORENIX500`) |
-| `/checkout` | Multi-step Checkout supporting Shop 1 / Shop 2 Free Pickup, Courier delivery, bKash, Nagad, Card, and 0% EMI |
-| `/rma` | Customer RMA status tracking by serial number or ticket ID, with online RMA request submission |
-| `/stores` | Physical branch locator with hotlines, operating hours, and showroom services |
+| `/checkout` | Multi-step Checkout supporting Showroom Free Pickup, Express Courier, bKash, Nagad, Cards, and 0% EMI |
+| `/rma` | Customer RMA status tracking by serial number or ticket ID with online claim request submission |
+| `/stores` | Physical branch directory with hotlines, operating hours, and location services |
 | `/[slug]` | Programmatic SEO commercial landing pages (e.g. `/rtx-5060`, `/gaming-laptop`, `/1tb-ssd`) and CMS static pages |
-| `/sitemap.xml` | Dynamic XML Sitemap automatically generated from published products, categories, brands, and SEO pages |
-| `/robots.txt` | Dynamic robots.txt protecting private admin/account paths and directing search crawlers to sitemap |
+| `/sitemap.xml` | Dynamic XML Sitemap generated from published products, categories, brands, and landing pages |
+| `/robots.txt` | Dynamic crawler directives protecting private administrative routes |
 
 ---
 
 ## 🛠️ Admin & ERP Management Routes
 
-| Route | Description |
-|---|---|
-| `/admin` | Executive Analytics Dashboard with Today's Sales, Gross Profit, Inventory Value, Low Stock Alerts, and Branch Breakdown |
-| `/admin/products` | Complete Product Catalogue table with cost prices, margins, stock status, and product duplication |
-| `/admin/products/create` | **18-Step Multi-Tab Product Manager** with category-based specification templates, location inventory, and Google SEO preview |
-| `/admin/categories` | Dynamic Category Tree with hierarchy, parent categories, URL slugs, and SEO metadata |
-| `/admin/brands` | Brand Partner Manager with origin country, website links, and featured status |
-| `/admin/inventory` | Multi-Branch Inventory Matrix tracking units across WH-MAIN, SHOP-1, SHOP-2, and RMA-HUB |
-| `/admin/pos` | High-speed Retail POS Terminal for Shop 1 & Shop 2 with instant barcode lookup and printable invoices |
-| `/admin/rma` | RMA & Warranty Hub Ticket Management with technician assignments and multi-tier RMA cost calculator |
-| `/admin/reports` | Business Reports with Net Profit calculation waterfall (`Revenue - COGS - Expenses - RMA Costs = Net Profit`) |
-| `/admin/seo` | SEO Landing Page Builder and Search Analytics (Top searches & zero-result demand tracking) |
-| `/admin/erp` | Modular ERP Integration Connector with manual sync triggers and audit logs |
-| `/admin/activity-log` | Immutable System Audit Trail capturing user, role, module, action, record ID, and payload diff |
+| Route | Description | Access Level |
+|---|---|---|
+| `/admin` | **Executive Analytics Dashboard**: Sales, Gross Profit (COGS), Asset Valuation, Low Stock Alerts, Branch Comparison, Promotion Controls, and Live Audit Feed | Staff / Admin |
+| `/admin/products` | Complete Product Catalogue table with cost prices, margins, quick trending/hot toggles, and duplicate actions | Staff / Admin |
+| `/admin/products/create` | **18-Step Multi-Tab Product Manager** with dynamic spec templates, multi-branch stock allocation, and Google SEO preview | Staff / Admin |
+| `/admin/categories` | Category Hierarchy Tree with parent/child relationships, slugs, and SEO metadata | Staff / Admin |
+| `/admin/brands` | Brand Partner Manager with logo upload, origin country, official website links, and featured status | Staff / Admin |
+| `/admin/attributes` | Dynamic hardware attributes and specification groups (Socket, Chipset, VRAM, Form Factor, etc.) | Staff / Admin |
+| `/admin/inventory` | Multi-Branch Inventory Matrix tracking real-time units across WH-MAIN, SHOP-1, SHOP-2, and RMA-HUB | Staff / Admin |
+| `/admin/branches` | Showroom and Warehouse Location Manager with branch codes, types, and active statuses | Staff / Admin |
+| `/admin/orders` | Customer order fulfillment, invoice generation, status pipeline, and payment verification | Staff / Admin |
+| `/admin/pos` | High-speed Retail POS Terminal for physical showrooms with barcode scanning and thermal receipt printing | Staff / Admin |
+| `/admin/purchases` | Procurement & Vendor Purchase Orders (PO) with receiving workflows and supplier ledgers | Staff / Admin |
+| `/admin/purchases/other-house` | Other House & Inter-Shop Borrowing/Lending ledger for external dealer stock acquisition | Staff / Admin |
+| `/admin/suppliers` | Authorized technology distributor directory (Global Brand, Smart Tech, UCC, Star Tech) | Staff / Admin |
+| `/admin/rma` | RMA Service Hub with technician assignments, diagnostic logs, parts replacement, and RMA cost calculator | Staff / Admin |
+| `/admin/expenses` | Showroom operating expenses, utility bills, rent, and staff costs tracking | Staff / Admin |
+| `/admin/reports` | Comprehensive Business Analytics with waterfall net profit calculation (`Revenue - COGS - Expenses - RMA = Net Profit`) | Staff / Admin |
+| `/admin/seo` | Programmatic SEO Landing Page Builder and real-time Search Demand tracking (Top searches & Zero-result queries) | Staff / Admin |
+| `/admin/banners` | Homepage Hero Slides & Promotional Banner Manager | Staff / Admin |
+| `/admin/users` | **Staff Management & RBAC Roles**: Personnel directory, custom role creation, branch assignments, and access control | **Super Admin** (Creation & Editing) |
+| `/admin/approvals` | Management approval queue for high-value stock adjustments, price overrides, and refunds | Staff / Admin |
+| `/admin/erp` | Modular ERP Integration Connector with manual synchronization triggers and API logs | Staff / Admin |
+| `/admin/activity-log` | **Enterprise Audit Trail & Change Inspector**: Searchable, filterable ledger of Who changed What, Where, When, with side-by-side JSON Diffs and CSV report export | **Super Admin Only** |
 
 ---
 
-## 🗄️ Database Architecture (MySQL)
+## 🔒 Security, RBAC & Audit Governance
 
-The MySQL database `corenix_db` includes 51 normalized tables:
-- **RBAC & Users**: `roles`, `permissions`, `role_permissions`, `users`
+1. **Role-Based Access Control (RBAC)**:
+   - Built-in roles: `Super Administrator`, `Shop Manager`, `Sales Executive`, `Warehouse Supervisor`, `RMA Technician`, `Accountant`.
+   - Dynamic custom role creation with automated slug generation and permission assignments.
+   - **Super Admin Exclusivity**:
+     - Only Super Administrators can create new staff personnel, define custom roles, and update user statuses.
+     - Non-super-admins view the staff directory in read-only mode with permission notices.
+2. **Immutable System Audit Trail**:
+   - Auto-captures operator identity (`user_id`, `user_name`, `role_name`) on every mutation across all modules.
+   - Records before/after JSON diffs, target module, record ID, and client IP origin.
+   - Interactive modal inspector with formatted payload comparison and 1-click JSON copy.
+   - Dedicated CSV export for external compliance auditing.
+   - Strictly restricted to Super Administrators in the sidebar, dashboard widget, and `/admin/activity-log` page.
+
+---
+
+## 🗄️ Database Architecture (MySQL / MariaDB)
+
+The database `corenix_db` includes 51 normalized tables:
+- **RBAC & Identity**: `roles`, `permissions`, `role_permissions`, `users`
 - **Branches & Locations**: `branches` (`shop`, `warehouse`, `rma_center`)
-- **Catalogue**: `categories`, `brands`, `products`, `product_images`, `product_specifications`, `product_descriptions`, `product_seo`, `attributes`, `attribute_groups`, `category_attributes`
+- **Catalogue & Specs**: `categories`, `brands`, `products`, `product_images`, `product_specifications`, `product_descriptions`, `product_seo`, `attributes`, `attribute_groups`, `category_attributes`
 - **Inventory & Logistics**: `inventory`, `inventory_transactions`, `stock_transfers`, `stock_transfer_items`
 - **Customers & Orders**: `customers`, `customer_addresses`, `orders`, `order_items`, `payments`
-- **Procurement**: `suppliers`, `purchase_orders`, `purchase_order_items`, `supplier_payments`
-- **RMA & Service Hub**: `rma_cases`, `technicians`, `service_vendors`, `rma_status_history`
-- **PC Builder**: `compatibility_rules`, `pc_builds`
+- **Procurement & Vendors**: `suppliers`, `purchase_orders`, `purchase_order_items`, `supplier_payments`, `partner_houses`
+- **RMA & Technical Hub**: `rma_cases`, `technicians`, `service_vendors`, `rma_status_history`
+- **PC Builder Engine**: `compatibility_rules`, `pc_builds`
 - **Finance & CMS**: `expenses`, `expense_categories`, `cms_pages`, `seo_landing_pages`, `banners`, `faqs`, `coupons`
-- **Security & ERP**: `audit_logs`, `search_analytics`, `erp_sync_logs`, `business_settings`
+- **Governance & Logs**: `audit_logs`, `search_analytics`, `erp_sync_logs`, `business_settings`
 
 ---
 
 ## 💻 Running the Platform Locally
 
 ### 1. Database Initialization
-MySQL is running via XAMPP on `127.0.0.1:3306`.
+MySQL runs via XAMPP on `127.0.0.1:3306`.
 ```bash
 # Import schema
 mysql -u root corenix_db < scripts/schema.sql
@@ -87,22 +116,25 @@ mysql -u root corenix_db < scripts/schema.sql
 node scripts/seed-db.js
 ```
 
-### 2. Start the Production Server
+### 2. Install Dependencies & Build
 ```bash
+npm install
 npm run build
-npm run start
 ```
-The application will be live at [http://localhost:3000](http://localhost:3000).
 
 ### 3. Start Development Server
 ```bash
 npm run dev
 ```
-.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
 ---
 
 ## 🔐 Default Credentials
-- **Super Administrator**: `admin@corenix.com` / `admin123`
-- **Shop 1 Manager**: `shop1@corenix.com` / `admin123`
-- **Operator**: `operator@corenix.com` / `operator123`
-- **Demo Customer**: `customer@gmail.com` / `customer123`
+
+| Role | Email | Password | Access Level |
+|---|---|---|---|
+| **Super Administrator** | `admin@corenix.com` | `admin123` | Full Enterprise & Security Access |
+| **Shop 1 Manager** | `shop1@corenix.com` | `admin123` | Store Operations, Orders & POS |
+| **Operator / Staff** | `operator@corenix.com` | `operator123` | Inventory, Catalogue & RMA |
+| **Demo Customer** | `customer@gmail.com` | `customer123` | Public Storefront & Customer Portal |

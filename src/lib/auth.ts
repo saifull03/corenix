@@ -91,21 +91,14 @@ export async function getAuthSession() {
   };
 }
 
-export function hasPermission(userRole: string, allowedRoles: string[]): boolean {
-  if (userRole === 'super-admin') return true;
-  return allowedRoles.includes(userRole);
-}
+export {
+  hasPermission,
+  isSuperAdmin,
+  canManagePurchases,
+  canPurchaseProducts,
+  isStoreManagerOnly,
+} from './permissions';
 
-export function isSuperAdmin(user: User | null | undefined): boolean {
-  if (!user) return false;
-  const slug = (user.role_slug || '').toLowerCase().replace(/_/g, '-');
-  const name = (user.role_name || '').toLowerCase();
-  return (
-    slug === 'super-admin' ||
-    slug === 'superadmin' ||
-    name.includes('super admin') ||
-    user.role_id === 1
-  );
-}
+
 
 

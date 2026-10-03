@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Building2, Bell, Receipt, User, ShieldCheck, LogOut, ExternalLink, Menu } from 'lucide-react';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import NotificationDropdown from './NotificationDropdown';
 import { useAdminSidebar } from './AdminSidebarContext';
 
 export default function AdminHeader() {
@@ -109,14 +110,8 @@ export default function AdminHeader() {
           <span className="sm:hidden text-[11px]">POS</span>
         </Link>
 
-        {/* Notifications */}
-        <button
-          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-white transition-colors relative border border-slate-200 dark:border-slate-700/80"
-          title="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500 dark:bg-cyan-400"></span>
-        </button>
+        {/* Notifications Dropdown (New Orders & Safe Stock 10 Alerts) */}
+        <NotificationDropdown activeBranch={activeBranch} />
 
         {/* User status & Logout */}
         <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800 text-xs">

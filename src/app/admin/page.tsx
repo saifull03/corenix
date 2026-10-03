@@ -22,6 +22,7 @@ import {
   Activity,
   Clock,
   ArrowRight,
+  Receipt,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -29,25 +30,53 @@ export const dynamic = 'force-dynamic';
 export default async function AdminDashboardPage() {
   const currentUser = await getCurrentUser();
   const isSuper = isSuperAdmin(currentUser);
+  const managerBranchId = !isSuper && currentUser?.branch_id ? currentUser.branch_id : null;
 
-  // 1. Fetch total sales & revenue
-  const salesStats = await query<any[]>(
-    `SELECT
-       COUNT(*) as total_orders,
-       COALESCE(SUM(total_amount), 0) as total_revenue,
-       COALESCE(SUM(gross_profit), 0) as total_profit
-     FROM orders`
-  );
+  // 1. Fetch total sales & revenue (filtered by branch if store manager)
+  const salesSql = managerBranchId
+    ? `SELECT
+         COUNT(*) as total_orders,
+         COALESCE(SUM(total_amount), 0) as total_revenue,
+         COALESCE(SUM(gross_profit), 0) as total_profit
+       FROM orders WHERE branch_id = ?`
+    : `SELECT
+         COUNT(*) as total_orders,
+         COALESCE(SUM(total_amount), 0) as total_revenue,
+         COALESCE(SUM(gross_profit), 0) as total_profit
+       FROM orders`;
+  const salesParams = managerBranchId ? [managerBranchId] : [];
+  const salesStats = await query<any[]>(salesSql, salesParams);
+
+  // 1b. Fetch Today's sales & orders for active branch
+  const todaySalesSql = managerBranchId
+    ? `SELECT
+         COUNT(*) as today_orders,
+         COALESCE(SUM(total_amount), 0) as today_revenue,
+         COALESCE(SUM(gross_profit), 0) as today_profit
+       FROM orders WHERE DATE(created_at) = CURDATE() AND branch_id = ?`
+    : `SELECT
+         COUNT(*) as today_orders,
+         COALESCE(SUM(total_amount), 0) as today_revenue,
+         COALESCE(SUM(gross_profit), 0) as today_profit
+       FROM orders WHERE DATE(created_at) = CURDATE()`;
+  const todayStats = await query<any[]>(todaySalesSql, salesParams);
 
   // 2. Fetch inventory valuation
-  const inventoryStats = await query<any[]>(
-    `SELECT
-       COUNT(DISTINCT product_id) as total_products,
-       COALESCE(SUM(inv.quantity * p.purchase_cost), 0) as total_inventory_value,
-       COALESCE(SUM(CASE WHEN inv.quantity <= inv.min_stock_level THEN 1 ELSE 0 END), 0) as low_stock_count
-     FROM inventory inv
-     JOIN products p ON inv.product_id = p.id`
-  );
+  const inventorySql = managerBranchId
+    ? `SELECT
+         COUNT(DISTINCT inv.product_id) as total_products,
+         COALESCE(SUM(inv.quantity * p.purchase_cost), 0) as total_inventory_value,
+         COALESCE(SUM(CASE WHEN inv.quantity <= inv.min_stock_level THEN 1 ELSE 0 END), 0) as low_stock_count
+       FROM inventory inv
+       JOIN products p ON inv.product_id = p.id
+       WHERE inv.branch_id = ?`
+    : `SELECT
+         COUNT(DISTINCT product_id) as total_products,
+         COALESCE(SUM(inv.quantity * p.purchase_cost), 0) as total_inventory_value,
+         COALESCE(SUM(CASE WHEN inv.quantity <= inv.min_stock_level THEN 1 ELSE 0 END), 0) as low_stock_count
+       FROM inventory inv
+       JOIN products p ON inv.product_id = p.id`;
+  const inventoryStats = await query<any[]>(inventorySql, salesParams);
 
   // 3. Fetch RMA cases stats & total RMA cost
   const rmaStats = await query<any[]>(
@@ -70,15 +99,23 @@ export default async function AdminDashboardPage() {
   );
 
   // 5. Recent orders
-  const recentOrders = await query<any[]>(
-    `SELECT o.id, o.order_number, o.total_amount, o.order_status, o.payment_status,
-            o.payment_method, o.created_at, b.name as branch_name, c.name as customer_name
-     FROM orders o
-     JOIN branches b ON o.branch_id = b.id
-     LEFT JOIN customers c ON o.customer_id = c.id
-     ORDER BY o.created_at DESC
-     LIMIT 5`
-  );
+  const recentOrdersSql = managerBranchId
+    ? `SELECT o.id, o.order_number, o.total_amount, o.order_status, o.payment_status,
+              o.payment_method, o.created_at, b.name as branch_name, c.name as customer_name
+       FROM orders o
+       JOIN branches b ON o.branch_id = b.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       WHERE o.branch_id = ?
+       ORDER BY o.created_at DESC
+       LIMIT 5`
+    : `SELECT o.id, o.order_number, o.total_amount, o.order_status, o.payment_status,
+              o.payment_method, o.created_at, b.name as branch_name, c.name as customer_name
+       FROM orders o
+       JOIN branches b ON o.branch_id = b.id
+       LEFT JOIN customers c ON o.customer_id = c.id
+       ORDER BY o.created_at DESC
+       LIMIT 5`;
+  const recentOrders = await query<any[]>(recentOrdersSql, salesParams);
 
   // 6. Promotional stats (Trending & Hot Deals)
   const promoStats = await query<any[]>(
@@ -98,18 +135,22 @@ export default async function AdminDashboardPage() {
       )
     : [];
 
-
   const stats = {
-    revenue: Number(salesStats[0]?.total_revenue || 46970),
-    profit: Number(salesStats[0]?.total_profit || 5900),
-    orders: Number(salesStats[0]?.total_orders || 1),
-    inventoryValue: Number(inventoryStats[0]?.total_inventory_value || 1450000),
-    lowStock: Number(inventoryStats[0]?.low_stock_count || 1),
-    pendingRma: Number(rmaStats[0]?.pending_rma || 1),
+    revenue: Number(salesStats[0]?.total_revenue || 0),
+    profit: Number(salesStats[0]?.total_profit || 0),
+    orders: Number(salesStats[0]?.total_orders || 0),
+    todaySales: Number(todayStats[0]?.today_revenue || 0),
+    todayOrders: Number(todayStats[0]?.today_orders || 0),
+    todayProfit: Number(todayStats[0]?.today_profit || 0),
+    inventoryValue: Number(inventoryStats[0]?.total_inventory_value || 0),
+    lowStock: Number(inventoryStats[0]?.low_stock_count || 0),
+    pendingRma: Number(rmaStats[0]?.pending_rma || 0),
     rmaCost: Number(rmaStats[0]?.total_rma_cost || 0),
     trendingCount: Number(promoStats[0]?.trending_count || 0),
     hotDealsCount: Number(promoStats[0]?.hot_deals_count || 0),
+    branchName: managerBranchId === 2 ? 'Shop 1 (Uttara Flagship)' : managerBranchId === 3 ? 'Shop 2 (Dhanmondi Branch)' : 'All Enterprise Locations',
   };
+
 
   const getActionBadgeColor = (action: string) => {
     const a = (action || '').toLowerCase();
@@ -130,8 +171,9 @@ export default async function AdminDashboardPage() {
       {/* Title & Live Status */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-brand-400">
-            Head Office Control Center
+          <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-brand-400 flex items-center gap-1.5">
+            <Building2 className="w-3.5 h-3.5" />
+            <span>{stats.branchName} • Command Center</span>
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
             Executive Analytics Dashboard
@@ -148,16 +190,17 @@ export default async function AdminDashboardPage() {
           </Link>
           <Link
             href="/admin/pos"
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors"
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs border border-emerald-500 flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all"
           >
-            Open POS
+            <Receipt className="w-4 h-4" />
+            <span>Launch POS Terminal</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI Cards Grid (Requirement 39) */}
+      {/* KPI Cards Grid (Requirement 39 & Store Manager Sales Workflow) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Sales */}
+        {/* Total Sales & Today's Sales */}
         <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Total Sales</span>
@@ -165,11 +208,11 @@ export default async function AdminDashboardPage() {
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">৳{stats.revenue.toLocaleString()}</div>
           <div className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
-            <TrendingUp className="w-3.5 h-3.5" /> +14.2% from last month
+            <TrendingUp className="w-3.5 h-3.5" /> Today: <strong>৳{stats.todaySales.toLocaleString()}</strong> ({stats.todayOrders} Orders)
           </div>
         </div>
 
-        {/* Gross Profit */}
+        {/* Gross Profit & Today's Profit */}
         <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Gross Profit (COGS)</span>
@@ -177,9 +220,10 @@ export default async function AdminDashboardPage() {
           </div>
           <div className="text-2xl font-black text-sky-600 dark:text-brand-400">৳{stats.profit.toLocaleString()}</div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Margin: <strong className="text-slate-800 dark:text-slate-200">{((stats.profit / (stats.revenue || 1)) * 100).toFixed(1)}%</strong>
+            Today&apos;s Profit: <strong className="text-slate-800 dark:text-slate-200">৳{stats.todayProfit.toLocaleString()}</strong>
           </div>
         </div>
+
 
         {/* Total Inventory Value */}
         <div className="p-5 rounded-2xl bg-white dark:bg-navy-900 border border-slate-200/80 dark:border-slate-800 space-y-2 shadow-xs">

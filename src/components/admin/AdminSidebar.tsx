@@ -10,6 +10,7 @@ import {
   Tag,
   Sliders,
   Warehouse,
+  ArrowRightLeft,
   Building2,
   ShoppingCart,
   Receipt,
@@ -30,7 +31,19 @@ import {
 } from 'lucide-react';
 import { useAdminSidebar } from './AdminSidebarContext';
 
-const rawMenuItems = [
+interface MenuItemDef {
+  label: string;
+  href: string;
+  icon: any;
+  indent?: boolean;
+  superAdminOnly?: boolean;
+  purchaseAccess?: boolean; // Accounts Manager, Admin, HR, Store/Shop Manager
+  purchaseManageOnly?: boolean; // Accounts Manager, Admin, HR, Super Admin, Purchase Manager
+  financeAccess?: boolean; // Accounts Manager, Admin, HR, Super Admin
+  hrOrAdminOnly?: boolean; // Super Admin, Admin, HR Manager
+}
+
+const rawMenuItems: MenuItemDef[] = [
   { label: 'Executive Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Products Catalogue', href: '/admin/products', icon: Package },
   { label: 'Add New Product', href: '/admin/products/create', icon: Package, indent: true },
@@ -38,18 +51,19 @@ const rawMenuItems = [
   { label: 'Brands', href: '/admin/brands', icon: Tag },
   { label: 'Dynamic Attributes', href: '/admin/attributes', icon: Sliders },
   { label: 'Multi-Branch Inventory', href: '/admin/inventory', icon: Warehouse },
+  { label: 'Stock Transfer', href: '/admin/inventory/transfer', icon: ArrowRightLeft, indent: true },
   { label: 'Branches & Locations', href: '/admin/branches', icon: Building2 },
   { label: 'Customer Orders', href: '/admin/orders', icon: ShoppingCart },
   { label: 'Point of Sale (POS)', href: '/admin/pos', icon: Receipt },
-  { label: 'Purchases & Procurement', href: '/admin/purchases', icon: Truck },
-  { label: 'Other House & Lend', href: '/admin/purchases/other-house', icon: Store, indent: true },
-  { label: 'Suppliers Management', href: '/admin/suppliers', icon: Building2 },
+  { label: 'Purchases & Procurement', href: '/admin/purchases', icon: Truck, purchaseAccess: true },
+  { label: 'Other House & Lend', href: '/admin/purchases/other-house', icon: Store, indent: true, purchaseAccess: true },
+  { label: 'Suppliers Management', href: '/admin/suppliers', icon: Building2, purchaseManageOnly: true },
   { label: 'RMA & Service Center', href: '/admin/rma', icon: Wrench },
-  { label: 'Expenses & Finance', href: '/admin/expenses', icon: DollarSign },
-  { label: 'Reports & Profit Analysis', href: '/admin/reports', icon: BarChart3 },
+  { label: 'Expenses & Finance', href: '/admin/expenses', icon: DollarSign, financeAccess: true },
+  { label: 'Reports & Profit Analysis', href: '/admin/reports', icon: BarChart3, financeAccess: true },
   { label: 'SEO & Landing Pages', href: '/admin/seo', icon: Search },
   { label: 'Banners & Slider', href: '/admin/banners', icon: LayoutTemplate },
-  { label: 'Users & Staff RBAC', href: '/admin/users', icon: Users },
+  { label: 'Users & Staff RBAC', href: '/admin/users', icon: Users, hrOrAdminOnly: true },
   { label: 'Operator Approvals', href: '/admin/approvals', icon: CheckSquare },
   { label: 'ERP Integration Sync', href: '/admin/erp', icon: RefreshCw },
   { label: 'Enterprise Audit Trail', href: '/admin/activity-log', icon: FileText, superAdminOnly: true },
@@ -76,17 +90,55 @@ export default function AdminSidebar() {
       .catch(() => {});
   }, []);
 
+  const roleSlug = (currentUser?.role_slug || '').toLowerCase().replace(/_/g, '-');
+  const roleName = (currentUser?.role_name || '').toLowerCase();
+
   const isSuperAdmin = Boolean(
     currentUser &&
-      ((currentUser.role_slug || '').toLowerCase().replace(/_/g, '-') === 'super-admin' ||
-        (currentUser.role_name || '').toLowerCase().includes('super admin') ||
+      (roleSlug === 'super-admin' ||
+        roleSlug === 'superadmin' ||
+        roleName.includes('super admin') ||
         currentUser.role_id === 1)
   );
 
+  const canManagePurchasesRole = Boolean(
+    isSuperAdmin ||
+      roleSlug === 'admin' ||
+      roleSlug === 'accounts-manager' ||
+      roleSlug === 'account-manager' ||
+      roleSlug === 'hr' ||
+      roleSlug === 'hr-manager' ||
+      roleSlug === 'purchase-manager' ||
+      roleName.includes('account') ||
+      roleName.includes('admin') ||
+      roleName.includes('hr') ||
+      roleName.includes('purchase manager')
+  );
+
+  const isStoreManager = Boolean(
+    roleSlug === 'shop-manager' ||
+      roleSlug === 'store-manager' ||
+      roleName.includes('shop manager') ||
+      roleName.includes('store manager')
+  );
+
+  const canAccessPurchases = Boolean(canManagePurchasesRole || isStoreManager);
+
+  const isHrOrAdmin = Boolean(
+    isSuperAdmin ||
+      roleSlug === 'admin' ||
+      roleSlug === 'hr' ||
+      roleSlug === 'hr-manager' ||
+      roleName.includes('admin') ||
+      roleName.includes('hr')
+  );
+
   const menuItems = rawMenuItems.filter((item) => {
-    if (item.superAdminOnly) {
-      return isSuperAdmin;
-    }
+    if (item.superAdminOnly && !isSuperAdmin) return false;
+    if (item.purchaseManageOnly && !canManagePurchasesRole) return false;
+    if (item.purchaseAccess && !canAccessPurchases) return false;
+    if (item.financeAccess && !canManagePurchasesRole) return false;
+    if (item.hrOrAdminOnly && !isHrOrAdmin) return false;
     return true;
   });
 

@@ -36,3 +36,25 @@ export async function queryOne<T = any>(sql: string, params: any[] = []): Promis
   }
   return null;
 }
+
+export async function getConnection(): Promise<mysql.PoolConnection> {
+  return await pool.getConnection();
+}
+
+export async function withTransaction<T>(
+  callback: (connection: mysql.PoolConnection) => Promise<T>
+): Promise<T> {
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+  try {
+    const result = await callback(connection);
+    await connection.commit();
+    return result;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
